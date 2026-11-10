@@ -71,9 +71,7 @@ function brandedMarkup(background: string, size: number): string | null {
   <g clip-path="url(#naija-export-circle)">
     ${portrait}
   </g>
-  ${brandMark(64, 64, 76)}
-  <text x="160" y="112" font-family="Georgia, 'Times New Roman', serif" font-size="52" fill="${CREAM}">Naija Faces</text>
-  <text x="161" y="140" font-family="Verdana, 'Helvetica Neue', sans-serif" font-size="13" letter-spacing="4" fill="${CREAM}" opacity=".72">NAIJA STYLE, MADE BY YOU</text>
+  ${brandMark(64, 64, 80)}
 </svg>`
 }
 

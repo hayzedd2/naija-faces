@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { TraitPicker } from './components/TraitPicker'
+import { ExportDialog } from './components/ExportDialog'
 import {
   BrandMark,
   CheckIcon,
@@ -51,6 +52,7 @@ export default function App() {
   const [traits, setTraits] = useState<Traits>(initialTraits)
   const [active, setActive] = useState<PickerKey>('headwear')
   const [toast, setToast] = useState<Toast | null>(null)
+  const [exportOpen, setExportOpen] = useState(false)
 
   const code = encodeTraits(traits)
   const bg = (BACKGROUNDS[traits.bg] ?? BACKGROUNDS[0]).value
@@ -133,49 +135,8 @@ export default function App() {
     }
   }
 
-  const download = () => {
-    const svg = document.getElementById('portrait-svg') as SVGSVGElement | null
-    if (!svg) return
-
-    const clone = svg.cloneNode(true) as SVGSVGElement
-    clone.setAttribute('width', '1024')
-    clone.setAttribute('height', '1024')
-    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
-    const xml = new XMLSerializer().serializeToString(clone)
-    const svgBlob = new Blob([xml], { type: 'image/svg+xml;charset=utf-8' })
-    const svgUrl = URL.createObjectURL(svgBlob)
-    const image = new Image()
-
-    image.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = 1024
-      canvas.height = 1024
-      const context = canvas.getContext('2d')
-      if (!context) {
-        URL.revokeObjectURL(svgUrl)
-        showToast('Could not save portrait')
-        return
-      }
-      context.drawImage(image, 0, 0, 1024, 1024)
-      URL.revokeObjectURL(svgUrl)
-      canvas.toBlob((png) => {
-        if (!png) return
-        const pngUrl = URL.createObjectURL(png)
-        const link = document.createElement('a')
-        link.href = pngUrl
-        link.download = `naija-faces-${code}.png`
-        link.click()
-        window.setTimeout(() => URL.revokeObjectURL(pngUrl), 1200)
-        showToast('Portrait saved as PNG')
-      }, 'image/png')
-    }
-
-    image.onerror = () => {
-      URL.revokeObjectURL(svgUrl)
-      showToast('Could not save portrait')
-    }
-
-    image.src = svgUrl
+  const openExport = () => {
+    setExportOpen(true)
   }
 
   return (
@@ -202,9 +163,14 @@ export default function App() {
             <span className="btn-label">Shuffle</span>
             <kbd>R</kbd>
           </button>
-          <button type="button" className="btn btn-outline" onClick={download}>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={openExport}
+            aria-haspopup="dialog"
+          >
             <DownloadIcon />
-            <span className="btn-label">Download</span>
+            <span className="btn-label">Save</span>
           </button>
           <button
             type="button"
@@ -221,14 +187,13 @@ export default function App() {
       <main className="page">
         <section className="hero">
           <div>
-            <p className="eyebrow">The Naija portrait studio</p>
+            <p className="eyebrow">The Naija avatar studio</p>
             <h1>
               Make a face<span className="accent">.</span>
             </h1>
           </div>
           <p className="hero-lede">
-            Wrap a gele, add coral beads, choose your marks. A portrait that looks like you — or
-            whoever you feel like today.
+            Pick your hair, add a gele or fila, throw on some beads. Make a face that looks like you, or just have fun.
           </p>
         </section>
 
@@ -290,6 +255,15 @@ export default function App() {
           {toast.message}
         </div>
       )}
+
+      <ExportDialog
+        open={exportOpen}
+        code={code}
+        background={bg}
+        onClose={() => setExportOpen(false)}
+        onToast={showToast}
+        onCopyLink={copyLink}
+      />
     </div>
   )
 }
