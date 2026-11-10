@@ -13,53 +13,7 @@ const GOLD_DARK = '#8a6420'
 const CREAM = '#f2e8d8'
 const INK = '#231a15'
 
-const GELE_CROWN =
-  'M156 150 C134 118 140 80 162 50 C186 18 222 2 262 0 C310 -2 352 16 378 48 C402 78 404 114 394 148 C358 134 320 128 280 128 C236 128 192 136 156 150 Z'
-
-const GELE_BAND =
-  'M152 138 C190 152 228 159 264 159 C302 159 342 150 378 135 C380 150 372 164 354 172 C322 184 290 188 256 186 C222 184 190 178 168 166 C154 158 148 148 152 138 Z'
-
-const GELE_BAND_FOLD =
-  'M156 140 C194 154 228 160 262 160 C298 160 338 152 374 138 C372 148 366 156 354 162 C324 172 292 176 258 174 C226 172 194 166 172 158 C162 154 158 148 156 140 Z'
-
-const GELE_KNOT =
-  'M376 118 C398 108 418 120 420 140 C422 158 410 172 392 172 C400 160 402 146 396 136 C392 128 384 122 376 118 Z'
-
-const GELE_KNOT_INNER =
-  'M384 130 C394 126 404 132 406 142 C408 152 402 160 392 160 C396 150 396 140 384 130 Z'
-
-const GELE_TAIL =
-  'M390 168 C404 176 410 192 408 210 C406 224 398 236 386 244 C390 226 388 210 380 194 C376 184 380 174 390 168 Z'
-
-const GELE_WRAP =
-  'M156 150 C160 108 180 66 214 38 C244 14 282 2 320 4 C300 30 278 52 262 78 C244 108 236 132 238 150 Z'
-
-const FILAH_MAIN =
-  'M256 32 C318 32 360 62 366 116 C368 128 366 140 360 150 L152 150 C146 140 144 128 146 116 C152 62 194 32 256 32 Z'
-
-const FILAH_TOP =
-  'M256 32 C300 32 338 46 354 72 C330 58 296 50 256 50 C216 50 182 58 158 72 C174 46 212 32 256 32 Z'
-
-const FILAH_BAND =
-  'M152 112 C192 126 224 132 256 132 C288 132 320 126 360 112 L360 150 L152 150 Z'
-
-const OKPU_MAIN =
-  'M256 30 C318 30 360 60 366 114 C368 126 366 138 360 148 L152 148 C146 138 144 126 146 114 C152 60 194 30 256 30 Z'
-
-const OKPU_TOP =
-  'M256 30 C300 30 336 44 352 70 C328 56 294 48 256 48 C218 48 184 56 160 70 C176 44 212 30 256 30 Z'
-
-const OKPU_BAND =
-  'M152 114 C192 128 224 134 256 134 C288 134 320 128 360 114 L360 148 L152 148 Z'
-
-const KUFI_MAIN =
-  'M256 32 C318 32 360 64 364 118 C365 130 363 141 358 150 L154 150 C149 141 147 130 148 118 C152 64 194 32 256 32 Z'
-
-const KUFI_TOP =
-  'M256 32 C300 32 336 46 352 70 C328 58 294 50 256 50 C218 50 184 58 160 70 C176 46 212 32 256 32 Z'
-
-const KUFI_BAND =
-  'M152 110 C192 124 224 130 256 130 C288 130 320 124 360 110 L360 150 L152 150 Z'
+/* ───── GELE ───────────────────────────────────────────────────────────── */
 
 function AsoPattern({ fabric, scope, id }: { fabric: FabricOption; scope: string; id: string }) {
   return (
@@ -83,238 +37,459 @@ function fabricFill(fabric: FabricOption, scope: string, id: string): string {
 
 function Gele({ fabric, id }: { fabric: FabricOption; id: string }) {
   const fill = fabricFill(fabric, 'front', id)
-  const dark = shade(fabric.value, -0.26)
-  const outer = shade(fabric.value, -0.14)
-  const light = shade(fabric.value, 0.2)
+  const base = fabric.value
+  const deep = shade(base, -0.4)
+  const light = shade(base, 0.2)
+  const highlight = shade(base, 0.36)
+
+  // Wide wrapped crown with tapered side tails and an arched forehead opening.
+  const silhouette =
+    'M56 150 C42 90 66 28 110 -12 C150 -48 202 -70 256 -70 C310 -70 362 -48 402 -12 C446 28 470 90 456 150 C452 190 438 220 418 238 C406 248 388 248 376 238 C368 230 362 220 360 210 C356 180 334 148 302 124 C286 112 270 104 256 96 C242 104 226 112 210 124 C178 148 156 180 152 210 C150 220 144 230 136 238 C124 248 106 248 94 238 C74 220 60 190 56 150 Z'
+  const band =
+    'M144 220 C146 184 172 150 204 126 C224 110 242 102 256 102 C270 102 288 110 308 126 C340 150 366 184 368 220 L368 194 C366 160 340 126 308 102 C288 86 270 78 256 78 C242 78 224 86 204 102 C172 126 146 160 144 194 Z'
+  const bandOuter =
+    'M144 220 C146 184 172 150 204 126 C224 110 242 102 256 102 C270 102 288 110 308 126 C340 150 366 184 368 220'
+  const bandInner =
+    'M144 194 C146 160 172 126 204 102 C224 86 242 78 256 78 C270 78 288 86 308 102 C340 126 366 160 368 194'
+
+  const pleats = Array.from({ length: 13 }, (_, index) => {
+    const t = index / 12
+    const startX = 158 + t * 196
+    const startY = 202 - Math.sin(Math.PI * t) * 100
+    const endX = 64 + t * 384
+    const endY = 26 - Math.sin(Math.PI * t) * 72
+    const ctrlX = startX + (endX - startX) * 0.3
+    const ctrlY = startY - 102
+    return { startX, startY, endX, endY, ctrlX, ctrlY }
+  })
+
   return (
     <g>
       <defs>
         {fabric.pattern && <AsoPattern fabric={fabric} scope="front" id={id} />}
         <clipPath id={`gele-clip-${id}`}>
-          <path d={GELE_CROWN} />
+          <path d={silhouette} />
         </clipPath>
+        <linearGradient id={`gele-volume-${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor={highlight} stopOpacity=".4" />
+          <stop offset=".5" stopColor={highlight} stopOpacity="0" />
+          <stop offset="1" stopColor={deep} stopOpacity=".46" />
+        </linearGradient>
+        <linearGradient id={`gele-band-${id}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor={highlight} stopOpacity=".6" />
+          <stop offset=".5" stopColor={base} stopOpacity="0" />
+          <stop offset="1" stopColor={deep} stopOpacity=".5" />
+        </linearGradient>
       </defs>
-      <path d={GELE_CROWN} fill={fill} />
+
+      <path d={silhouette} fill={fill} />
+
       <g clipPath={`url(#gele-clip-${id})`}>
+        {/* Broad volume: shadow on the left, light on the right. */}
         <path
-          d="M156 150 C146 114 156 74 180 46 C200 22 228 8 256 6 C226 26 206 50 196 78 C186 106 188 130 196 150 Z"
-          fill={outer}
+          d="M56 150 C42 90 66 28 110 -12 C150 -48 202 -70 256 -70 C212 -58 172 -28 146 16 C120 60 108 108 116 150 C122 188 136 214 146 232 C132 244 112 244 98 232 C76 212 60 186 56 150 Z"
+          fill={deep}
+          opacity=".36"
         />
         <path
-          d="M394 148 C404 116 400 82 380 52 C362 26 336 10 304 4 C330 24 348 50 356 80 C364 110 362 130 356 148 Z"
+          d="M456 150 C470 90 446 28 402 -12 C362 -48 310 -70 256 -70 C306 -52 348 -18 372 28 C396 72 404 118 396 156 C390 196 376 224 366 238 C380 248 398 246 412 232 C434 212 450 186 456 150 Z"
           fill={light}
-          opacity=".45"
+          opacity=".32"
         />
-        <path d={GELE_WRAP} fill={outer} opacity=".9" />
+
+        {/* Layered top folds break up the dome. */}
         <path
-          d={GELE_WRAP}
+          d="M110 -12 C140 -50 180 -68 220 -70 C210 -40 196 -14 176 8 C150 0 128 -6 110 -12 Z"
+          fill={light}
+          opacity=".22"
+        />
+        <path
+          d="M220 -70 C240 -74 272 -74 292 -70 C288 -40 278 -14 264 6 C246 4 230 -2 216 0 C212 -24 214 -48 220 -70 Z"
+          fill={highlight}
+          opacity=".16"
+        />
+        <path
+          d="M292 -70 C334 -66 372 -48 402 -12 C384 -2 362 2 340 0 C322 -24 306 -48 292 -70 Z"
+          fill={deep}
+          opacity=".16"
+        />
+        <g fill="none" stroke={deep} strokeWidth="1.6" opacity=".22" strokeLinecap="round">
+          <path d="M110 -12 C140 -50 180 -68 220 -70" />
+          <path d="M220 -70 C240 -74 272 -74 292 -70" />
+          <path d="M292 -70 C334 -66 372 -48 402 -12" />
+        </g>
+
+        {/* Radiating folds — broad dark pleats with bright ridge highlights. */}
+        <g fill="none" strokeLinecap="round">
+          {pleats.map((pleat, index) => (
+            <path
+              key={`dark-${index}`}
+              d={`M${pleat.startX} ${pleat.startY} Q${pleat.ctrlX} ${pleat.ctrlY} ${pleat.endX} ${pleat.endY}`}
+              stroke={deep}
+              strokeWidth={index % 2 === 0 ? 12 : 8}
+              opacity=".3"
+            />
+          ))}
+          {pleats.map((pleat, index) => (
+            <path
+              key={`light-${index}`}
+              d={`M${pleat.startX + 8} ${pleat.startY - 5} Q${pleat.ctrlX + 8} ${pleat.ctrlY - 5} ${pleat.endX + 8} ${pleat.endY - 5}`}
+              stroke={highlight}
+              strokeWidth={index % 2 === 0 ? 5 : 3}
+              opacity=".42"
+            />
+          ))}
+        </g>
+
+        {/* Broad diagonal wrap fold across the crown. */}
+        <path
+          d="M104 196 C150 150 214 96 286 54 C332 28 374 12 410 8 C388 34 360 66 330 94 C292 130 250 168 218 198 Z"
+          fill={light}
+          opacity=".2"
+        />
+        <path
+          d="M104 196 C150 150 214 96 286 54 C332 28 374 12 410 8"
           fill="none"
-          stroke={dark}
-          strokeWidth="1.6"
-          opacity=".35"
+          stroke={highlight}
+          strokeWidth="2.4"
+          opacity=".34"
           strokeLinecap="round"
         />
+
+        {/* Shadow tucked under the front roll. */}
         <path
-          d="M238 150 C240 120 248 92 264 66 C280 40 300 18 324 4 C342 24 350 48 350 74 C350 104 342 130 330 150 Z"
-          fill={light}
-          opacity=".38"
+          d="M152 224 C178 188 206 160 230 144 C242 136 250 130 256 126 C262 130 270 136 282 144 C306 160 334 188 360 224 L360 210 C356 180 334 148 302 124 C286 112 270 104 256 96 C242 104 226 112 210 124 C178 148 156 180 152 210 Z"
+          fill={deep}
+          opacity=".26"
         />
-        <path
-          d="M196 150 C212 110 238 72 274 42 C298 24 324 14 350 12"
-          fill="none"
-          stroke={light}
-          strokeWidth="2.2"
-          opacity=".55"
-          strokeLinecap="round"
-        />
-        <g stroke={dark} strokeWidth="2" fill="none" opacity=".38" strokeLinecap="round">
-          <path d="M192 148 C186 112 196 76 218 48" />
-          <path d="M224 150 C220 110 228 74 246 40" />
-          <path d="M258 150 C256 108 262 72 276 34" />
-          <path d="M292 150 C292 110 300 76 314 44" />
-          <path d="M326 148 C328 112 336 82 350 58" />
-        </g>
-        <g stroke={light} strokeWidth="1.4" fill="none" opacity=".5" strokeLinecap="round">
-          <path d="M206 148 C202 112 210 78 230 50" />
-          <path d="M242 150 C240 110 246 74 262 38" />
-          <path d="M276 150 C276 110 284 76 300 42" />
-          <path d="M310 148 C312 114 320 84 334 60" />
-        </g>
-        <path
-          d="M156 150 C196 134 236 128 280 128 C320 128 358 134 394 148 L394 156 L156 156 Z"
-          fill={dark}
-          opacity=".14"
-        />
+
+        <path d={silhouette} fill={`url(#gele-volume-${id})`} />
       </g>
-      <path d={GELE_BAND} fill={fill} />
-      <path d={GELE_BAND_FOLD} fill={light} opacity=".3" />
-      <path d={GELE_BAND} fill="none" stroke={dark} strokeWidth="1.8" opacity=".38" />
-      <path d={GELE_TAIL} fill={outer} />
-      <path d={GELE_TAIL} fill="none" stroke={dark} strokeWidth="1.4" opacity=".35" />
-      <path d={GELE_KNOT} fill={fill} />
-      <path d={GELE_KNOT} fill="none" stroke={dark} strokeWidth="1.4" opacity=".4" />
-      <path d={GELE_KNOT_INNER} fill={light} opacity=".55" />
+
+      {/* Thick rolled band following the forehead arch. */}
+      <path d={band} fill={fill} />
+      <path d={band} fill={`url(#gele-band-${id})`} />
       <path
-        d="M176 150 C210 160 240 164 268 164 C304 164 340 156 372 144"
-        stroke={light}
-        strokeWidth="1.6"
+        d={bandOuter}
         fill="none"
+        stroke={deep}
+        strokeWidth="2.6"
         opacity=".55"
         strokeLinecap="round"
       />
+      <path
+        d={bandInner}
+        fill="none"
+        stroke={highlight}
+        strokeWidth="2"
+        opacity=".55"
+        strokeLinecap="round"
+      />
+      <path
+        d="M150 200 C176 168 202 142 228 124 C242 114 250 108 256 104 C262 108 270 114 284 124 C310 142 336 168 362 200"
+        fill="none"
+        stroke={highlight}
+        strokeWidth="1.4"
+        opacity=".28"
+        strokeLinecap="round"
+      />
+      <path d={silhouette} fill="none" stroke={deep} strokeWidth="1.5" opacity=".38" />
     </g>
   )
 }
 
+/* ───── FILAH ──────────────────────────────────────────────────────────── */
+
 function Filah({ id }: { id: string }) {
+  const navy = '#2b4268'
+  const navyDark = '#1b2e4c'
+  const navyLight = '#41618f'
+  const navyDeep = '#13233b'
+
+  // Tall folded cloth cap: peaked top, sloped sides and a wide gold edge.
+  const silhouette =
+    'M140 158 C132 130 138 102 156 82 C174 62 198 48 222 40 C236 22 258 14 280 22 C308 34 338 58 358 90 C374 116 382 140 380 158 C338 168 298 172 258 172 C218 172 178 168 140 158 Z'
+
   return (
     <g>
       <defs>
         <clipPath id={`filah-clip-${id}`}>
-          <path d={FILAH_MAIN} />
+          <path d={silhouette} />
         </clipPath>
+        <pattern
+          id={`filah-weave-${id}`}
+          width="28"
+          height="28"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
+          <rect width="28" height="28" fill={navy} />
+          <path d="M0 14 H28 M14 0 V28" stroke={GOLD} strokeWidth="1.6" opacity=".75" />
+          <circle cx="14" cy="14" r="2.1" fill={GOLD_LIGHT} opacity=".7" />
+          <circle cx="0" cy="0" r="1.5" fill={GOLD_LIGHT} opacity=".45" />
+          <circle cx="28" cy="28" r="1.5" fill={GOLD_LIGHT} opacity=".45" />
+        </pattern>
+        <linearGradient id={`filah-shade-${id}`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor={navyLight} stopOpacity=".38" />
+          <stop offset=".55" stopColor={navy} stopOpacity="0" />
+          <stop offset="1" stopColor={navyDeep} stopOpacity=".45" />
+        </linearGradient>
       </defs>
-      <path d={FILAH_MAIN} fill="#2f4f7f" />
-      <path d={FILAH_TOP} fill="#4a6fa5" opacity=".75" />
+
+      <path d={silhouette} fill={navy} />
+
       <g clipPath={`url(#filah-clip-${id})`}>
-        <g stroke={GOLD} strokeWidth="1.3" opacity=".75" strokeLinecap="round">
-          <path d="M196 58 L196 108" />
-          <path d="M220 52 L220 112" />
-          <path d="M244 48 L244 118" />
-          <path d="M268 48 L268 118" />
-          <path d="M292 52 L292 112" />
-          <path d="M316 58 L316 108" />
-        </g>
-        <g stroke={GOLD_LIGHT} strokeWidth="1" opacity=".55" strokeLinecap="round">
-          <path d="M186 62 L186 100" />
-          <path d="M326 62 L326 100" />
-        </g>
-        <g fill={GOLD} opacity=".8">
-          <path d="M204 78 L212 70 L220 78 L212 86 Z" />
-          <path d="M252 72 L260 64 L268 72 L260 80 Z" />
-          <path d="M300 78 L308 70 L316 78 L308 86 Z" />
-        </g>
+        {/* Woven lower-right panel. */}
+        <path
+          d="M146 160 C206 140 266 116 326 86 C346 76 364 64 380 56 L394 180 L146 180 Z"
+          fill={`url(#filah-weave-${id})`}
+        />
+
+        {/* Solid folded panel on the upper left. */}
+        <path
+          d="M140 158 C132 130 138 102 156 82 C174 62 198 48 222 40 C236 22 258 14 280 22 C308 34 338 58 358 90 C326 84 294 80 264 86 C222 94 182 118 148 160 Z"
+          fill={navyLight}
+          opacity=".72"
+        />
+
+        {/* Strong diagonal fold between the panels. */}
+        <path
+          d="M142 160 C188 138 234 114 276 86 C308 64 340 48 368 40 C352 64 328 88 302 110 C264 142 222 166 188 174 Z"
+          fill={navyDark}
+          opacity=".9"
+        />
+        <path
+          d="M142 160 C188 138 234 114 276 86 C308 64 340 48 368 40"
+          fill="none"
+          stroke={GOLD_LIGHT}
+          strokeWidth="1.6"
+          opacity=".6"
+        />
+        <path
+          d="M154 168 C198 148 244 122 286 94 C316 74 344 58 370 50"
+          fill="none"
+          stroke={navyDeep}
+          strokeWidth="1.3"
+          opacity=".45"
+        />
+
+        {/* Folded peak at the top. */}
+        <path
+          d="M222 40 C236 22 258 14 280 22 C298 30 316 42 330 56 C306 50 282 50 260 54 C244 56 230 50 222 40 Z"
+          fill={navyLight}
+          opacity=".6"
+        />
+        <path
+          d="M222 40 C236 22 258 14 280 22"
+          fill="none"
+          stroke={GOLD}
+          strokeWidth="1.2"
+          opacity=".55"
+        />
+
+        {/* Fine woven texture over the solid panel. */}
+        <path
+          d="M140 158 C132 130 138 102 156 82 C174 62 198 48 222 40 C236 22 258 14 280 22 C308 34 338 58 358 90 C326 84 294 80 264 86 C222 94 182 118 148 160 Z"
+          fill={`url(#filah-weave-${id})`}
+          opacity=".18"
+        />
+
+        <path d={silhouette} fill={`url(#filah-shade-${id})`} />
       </g>
-      <path d={FILAH_BAND} fill={GOLD} />
-      <path d={FILAH_BAND} fill="none" stroke={GOLD_DARK} strokeWidth="1.3" opacity=".55" />
+
+      {/* Wide gold edge along the lower rim. */}
       <path
-        d="M162 116 C196 128 226 134 256 134 C286 134 316 128 350 116"
+        d="M140 158 C178 168 218 172 258 172 C298 172 338 168 380 158 L380 144 C338 154 298 158 258 158 C218 158 178 154 140 144 Z"
+        fill={GOLD}
+      />
+      <path
+        d="M140 158 C178 168 218 172 258 172 C298 172 338 168 380 158"
+        fill="none"
+        stroke={GOLD_DARK}
+        strokeWidth="1.8"
+        opacity=".65"
+      />
+      <path
+        d="M148 150 C184 160 222 164 258 164 C294 164 332 160 372 150"
+        fill="none"
         stroke={GOLD_LIGHT}
-        strokeWidth="1.4"
-        fill="none"
-        opacity=".7"
+        strokeWidth="1.5"
+        opacity=".6"
       />
       <path
-        d="M256 32 C286 32 312 40 330 56"
-        stroke="#8a6420"
-        strokeWidth="1.4"
+        d="M140 144 C178 154 218 158 258 158 C298 158 338 154 380 144"
         fill="none"
-        opacity=".35"
+        stroke={GOLD_DARK}
+        strokeWidth="1.2"
+        opacity=".45"
       />
-      <circle cx="256" cy="33" r="5" fill={GOLD} stroke={GOLD_DARK} strokeWidth="1" />
+      <g fill={GOLD_DARK} opacity=".6">
+        <path d="M194 154 L200 148 L206 154 L200 160 Z" />
+        <path d="M250 156 L256 150 L262 156 L256 162 Z" />
+        <path d="M308 154 L314 148 L320 154 L314 160 Z" />
+      </g>
+
+      <path d={silhouette} fill="none" stroke={navyDeep} strokeWidth="1.3" opacity=".55" />
     </g>
   )
 }
 
+/* ───── OKPU AGU ───────────────────────────────────────────────────────── */
+
 function OkpuAgu({ id }: { id: string }) {
+  const red = '#c93528'
+  const redDark = '#a02a20'
+  const redLight = '#d94838'
+
   return (
     <g>
       <defs>
         <clipPath id={`okpu-clip-${id}`}>
-          <path d={OKPU_MAIN} />
+          <path d="M256 46 C316 46 358 72 364 118 C366 128 364 138 360 148 L152 148 C148 138 146 128 148 118 C154 72 196 46 256 46 Z" />
         </clipPath>
         <pattern
           id={`okpu-stripes-${id}`}
-          width="24"
-          height="24"
-          patternUnits="userSpaceOnUse"
-          patternTransform="rotate(-5)"
-        >
-          <rect width="24" height="24" fill="#b23a2e" />
-          <rect width="24" height="7" fill={INK} />
-          <rect y="12" width="24" height="2.6" fill={CREAM} opacity=".85" />
-        </pattern>
-        <clipPath id={`okpu-band-clip-${id}`}>
-          <path d={OKPU_BAND} />
-        </clipPath>
-        <pattern
-          id={`leopard-${id}`}
-          width="20"
-          height="16"
+          width="512"
+          height="18"
           patternUnits="userSpaceOnUse"
         >
-          <rect width="20" height="16" fill="#e7cfa6" />
-          <ellipse cx="6" cy="5" rx="3" ry="2.2" fill="#8a5a32" opacity=".85" />
-          <ellipse cx="16" cy="11" rx="2.6" ry="2" fill="#8a5a32" opacity=".85" />
-          <ellipse cx="11" cy="1" rx="1.6" ry="1.2" fill="#5a3520" opacity=".7" />
+          <rect width="512" height="18" fill={red} />
+          <rect width="512" height="4" y="0" fill={INK} />
+          <rect width="512" height="2.4" y="5" fill={CREAM} opacity=".9" />
+          <rect width="512" height="2.4" y="8.5" fill={CREAM} opacity=".9" />
+          <rect width="512" height="4" y="14" fill={INK} />
         </pattern>
       </defs>
-      <path d={OKPU_MAIN} fill={`url(#okpu-stripes-${id})`} />
+
+      <path
+        d="M256 46 C316 46 358 72 364 118 C366 128 364 138 360 148 L152 148 C148 138 146 128 148 118 C154 72 196 46 256 46 Z"
+        fill={red}
+      />
+
       <g clipPath={`url(#okpu-clip-${id})`}>
-        <path d={OKPU_TOP} fill="#c94a3c" opacity=".45" />
-        <path d={OKPU_BAND} fill={`url(#leopard-${id})`} />
-        <path d={OKPU_BAND} fill="none" stroke="#6b4426" strokeWidth="1.2" opacity=".55" />
+        <rect x="140" y="40" width="240" height="120" fill={`url(#okpu-stripes-${id})`} />
+        <path
+          d="M256 46 C306 46 344 62 358 88 C334 72 298 62 256 62 C214 62 178 72 154 88 C168 62 206 46 256 46 Z"
+          fill={redLight}
+          opacity=".4"
+        />
+        <path
+          d="M148 118 C154 72 196 46 256 46 C210 50 180 72 170 102 C166 114 162 128 160 148 L152 148 C148 138 146 128 148 118 Z"
+          fill={INK}
+          opacity=".12"
+        />
       </g>
-      <g transform="translate(330 22) rotate(12)">
-        <path d="M0 104 C8 66 20 34 48 4 C54 30 48 60 32 82 C24 94 12 104 0 104 Z" fill={CREAM} />
-        <path d="M20 84 C28 58 36 36 48 12 C44 40 36 66 24 88 Z" fill="#b23a2e" opacity=".9" />
-        <path d="M2 100 C10 64 24 32 48 6" stroke={INK} strokeWidth="1.6" fill="none" />
-        <g stroke={INK} strokeWidth="1" fill="none" opacity=".5">
-          <path d="M12 86 C18 66 28 44 42 24" />
-          <path d="M8 94 C16 70 26 48 38 30" />
+
+      <path
+        d="M256 46 C316 46 358 72 364 118 C366 128 364 138 360 148 L152 148 C148 138 146 128 148 118 C154 72 196 46 256 46 Z"
+        fill="none"
+        stroke={redDark}
+        strokeWidth="1.2"
+        opacity=".5"
+      />
+
+      {/* Eagle feather */}
+      <g transform="translate(340 38) rotate(15)">
+        <path d="M0 80 C6 50 14 24 30 0 C36 22 30 48 20 66 C14 76 6 82 0 80 Z" fill={CREAM} />
+        <path d="M12 64 C18 42 24 22 30 4 C26 28 20 50 16 68 Z" fill={red} opacity=".85" />
+        <path d="M2 78 C8 48 18 22 30 2" stroke={INK} strokeWidth="1.4" fill="none" />
+        <g stroke={INK} strokeWidth=".8" fill="none" opacity=".4">
+          <path d="M8 68 C14 54 20 38 28 20" />
+          <path d="M4 74 C12 56 20 40 26 26" />
         </g>
       </g>
+
       <path
-        d="M340 112 C346 104 356 102 364 108 C358 116 352 124 348 132 C344 126 342 118 340 112 Z"
-        fill={`url(#leopard-${id})`}
+        d="M346 114 C352 108 360 108 366 114 C360 120 354 126 350 132 C348 126 346 120 346 114 Z"
+        fill="#e7cfa6"
         stroke="#6b4426"
-        strokeWidth="1"
+        strokeWidth=".8"
       />
     </g>
   )
 }
 
+/* ───── FULA / KUFI ────────────────────────────────────────────────────── */
+
 function Kufi({ id }: { id: string }) {
+  const capColor = '#e9d9b8'
+  const capLight = '#f6ecd8'
+  const capShadow = '#d4c4a0'
+  const bandColor = '#6b3a1e'
+  const bandLight = '#8a5430'
+  const accentCoral = '#d07050'
+
   return (
     <g>
       <defs>
         <clipPath id={`kufi-clip-${id}`}>
-          <path d={KUFI_BAND} />
+          <path d="M256 42 C318 42 360 58 366 96 C368 108 368 120 366 132 C364 140 360 146 356 150 L156 150 C152 146 148 140 146 132 C144 120 144 108 146 96 C152 58 194 42 256 42 Z" />
         </clipPath>
-        <pattern id={`kufi-dots-${id}`} width="22" height="22" patternUnits="userSpaceOnUse">
-          <path
-            d="M11 3 L19 11 L11 19 L3 11 Z"
-            fill="none"
-            stroke={CREAM}
-            strokeWidth="1.3"
-            opacity=".85"
-          />
-          <circle cx="11" cy="11" r="1.8" fill="#e2725b" opacity=".9" />
+        <pattern id={`kufi-geo-${id}`} width="24" height="24" patternUnits="userSpaceOnUse">
+          <rect width="24" height="24" fill={bandColor} />
+          <path d="M12 2 L22 12 L12 22 L2 12 Z" fill="none" stroke={capColor} strokeWidth="1.6" opacity=".8" />
+          <path d="M12 6 L18 12 L12 18 L6 12 Z" fill="none" stroke={capColor} strokeWidth="1" opacity=".5" />
+          <circle cx="12" cy="12" r="2" fill={accentCoral} opacity=".85" />
+          <circle cx="0" cy="0" r="1.2" fill={accentCoral} opacity=".6" />
+          <circle cx="24" cy="0" r="1.2" fill={accentCoral} opacity=".6" />
+          <circle cx="0" cy="24" r="1.2" fill={accentCoral} opacity=".6" />
+          <circle cx="24" cy="24" r="1.2" fill={accentCoral} opacity=".6" />
         </pattern>
       </defs>
-      <path d={KUFI_MAIN} fill="#e9d9b8" />
-      <path d={KUFI_TOP} fill="#f6ecd8" />
-      <g clipPath={`url(#kufi-clip-${id})`}>
-        <path d={KUFI_BAND} fill="#7a4a2e" />
-        <rect x="148" y="104" width="216" height="48" fill={`url(#kufi-dots-${id})`} />
-      </g>
-      <path d={KUFI_BAND} fill="none" stroke="#5a3520" strokeWidth="1.4" opacity=".55" />
+
       <path
-        d="M164 116 C198 128 226 134 256 134 C286 134 314 128 348 116"
-        stroke={CREAM}
-        strokeWidth="1.3"
+        d="M256 42 C318 42 360 58 366 96 C368 108 368 120 366 132 C364 140 360 146 356 150 L156 150 C152 146 148 140 146 132 C144 120 144 108 146 96 C152 58 194 42 256 42 Z"
+        fill={capColor}
+      />
+
+      <g clipPath={`url(#kufi-clip-${id})`}>
+        <path
+          d="M256 42 C306 42 344 52 358 72 C334 58 298 50 256 50 C214 50 178 58 154 72 C168 52 206 42 256 42 Z"
+          fill={capLight}
+        />
+        <g stroke={capShadow} strokeWidth=".8" fill="none" opacity=".3">
+          <path d="M190 52 L188 98" />
+          <path d="M210 48 L208 100" />
+          <path d="M230 46 L228 102" />
+          <path d="M250 44 L248 104" />
+          <path d="M270 44 L268 104" />
+          <path d="M290 46 L288 102" />
+          <path d="M310 48 L308 100" />
+          <path d="M330 52 L328 98" />
+        </g>
+        <rect x="140" y="104" width="232" height="50" fill={`url(#kufi-geo-${id})`} />
+        <path
+          d="M148 104 C192 114 226 118 256 118 C286 118 320 114 364 104"
+          stroke={bandLight}
+          strokeWidth="2"
+          fill="none"
+          opacity=".7"
+        />
+        <path
+          d="M152 108 C194 118 228 122 256 122 C284 122 318 118 360 108"
+          stroke={capColor}
+          strokeWidth="1"
+          fill="none"
+          opacity=".5"
+        />
+      </g>
+
+      <path
+        d="M256 42 C318 42 360 58 366 96 C368 108 368 120 366 132 C364 140 360 146 356 150 L156 150 C152 146 148 140 146 132 C144 120 144 108 146 96 C152 58 194 42 256 42 Z"
         fill="none"
-        opacity=".45"
+        stroke={bandColor}
+        strokeWidth="1.2"
+        opacity=".4"
       />
       <path
-        d="M256 32 C300 32 336 46 352 70"
-        stroke="#d9c4a0"
+        d="M256 44 C296 44 330 52 350 66"
+        stroke={capShadow}
         strokeWidth="1.4"
         fill="none"
-        opacity=".7"
+        opacity=".5"
       />
-      <circle cx="256" cy="34" r="4.6" fill="#7a4a2e" />
-      <circle cx="256" cy="32.8" r="1.6" fill="#e9d9b8" opacity=".75" />
+      <circle cx="256" cy="44" r="4.5" fill={bandColor} />
+      <circle cx="255" cy="43" r="1.6" fill={capColor} opacity=".6" />
     </g>
   )
 }

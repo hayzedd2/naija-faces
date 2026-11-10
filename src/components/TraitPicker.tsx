@@ -8,7 +8,7 @@ import {
   type PickerKey,
   type Traits,
 } from '../face/config'
-import { CheckIcon, SparkleIcon } from './icons'
+import { CheckIcon } from './icons'
 import { OptionPreview } from './OptionPreview'
 
 type Props = {
@@ -108,8 +108,7 @@ export function TraitPicker({
           className="mini-random"
           onClick={() => onRandomizeCategory(active)}
         >
-          <SparkleIcon size={14} />
-          Surprise me
+          Random
         </button>
       </div>
 
