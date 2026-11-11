@@ -19,4 +19,3 @@ export const EYE_Y = 233
 export const EYE_LEFT_X = 210
 export const EYE_RIGHT_X = 302
 export const BROW_Y = 203
-export const MOUTH_Y = 345

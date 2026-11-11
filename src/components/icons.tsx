@@ -60,15 +60,6 @@ export function ResetIcon({ size = 15, className }: IconProps) {
   )
 }
 
-export function SparkleIcon({ size = 15, className }: IconProps) {
-  return (
-    <svg {...base(size)} className={className}>
-      <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3Z" />
-      <path d="M19 16.5 19.7 18.3 21.5 19 19.7 19.7 19 21.5 18.3 19.7 16.5 19 18.3 18.3 19 16.5Z" />
-    </svg>
-  )
-}
-
 export function CloseIcon({ size = 18, className }: IconProps) {
   return (
     <svg {...base(size)} className={className}>

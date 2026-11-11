@@ -26,7 +26,7 @@ bun run build:api
 bun run build:og
 ```
 
-The default is the split layout. Preview other layouts with `bun run build:og -- centered`, `screenshot`, or `portrait`.
+It uses the split layout and the face code set in `scripts/build-og.mjs`.
 
 ## Face image API
 
