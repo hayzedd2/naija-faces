@@ -26,6 +26,8 @@ bun run build:api
 bun run build:og
 ```
 
+The default is the split layout. Preview other layouts with `bun run build:og -- centered`, `screenshot`, or `portrait`.
+
 ## Face image API
 
 Every face can be served as an image from its code:
