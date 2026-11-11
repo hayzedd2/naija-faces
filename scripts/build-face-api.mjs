@@ -1,0 +1,17 @@
+import { build } from 'esbuild'
+import { rm } from 'node:fs/promises'
+
+const outfile = 'api/face.js'
+
+await rm(outfile, { force: true })
+await build({
+  entryPoints: ['server/face.ts'],
+  outfile,
+  bundle: true,
+  platform: 'node',
+  format: 'esm',
+  target: 'node20',
+  jsx: 'automatic',
+  packages: 'external',
+  logLevel: 'info',
+})

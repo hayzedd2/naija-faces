@@ -14,7 +14,7 @@ function faceApiDev(): Plugin {
         if (!pathname.startsWith('/face/')) return next()
 
         try {
-          const module = await server.ssrLoadModule('/api/face.ts')
+          const module = await server.ssrLoadModule('/server/face.ts')
           await module.default(req, res)
         } catch (error) {
           next(error)
