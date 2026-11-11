@@ -190,7 +190,7 @@ export function ExportDialog({ open, code, background, onClose, onToast, onCopyL
 
           <button type="button" className="export-copy-link" onClick={onCopyLink}>
             <LinkIcon size={15} />
-            Copy link
+            Copy image URL
           </button>
         </div>
 

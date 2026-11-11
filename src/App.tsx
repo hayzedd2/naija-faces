@@ -135,6 +135,16 @@ export default function App() {
     }
   }
 
+  const copyImageLink = async () => {
+    const url = `${window.location.origin}/face/${encodeTraits(traits)}?format=svg&size=1024`
+    try {
+      await navigator.clipboard.writeText(url)
+      showToast('Image URL copied — use it in an <img> tag')
+    } catch {
+      window.prompt('Copy your image URL', url)
+    }
+  }
+
   const openExport = () => {
     setExportOpen(true)
   }
@@ -262,7 +272,7 @@ export default function App() {
         background={bg}
         onClose={() => setExportOpen(false)}
         onToast={showToast}
-        onCopyLink={copyLink}
+        onCopyLink={copyImageLink}
       />
     </div>
   )
