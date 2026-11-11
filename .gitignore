@@ -8,5 +8,4 @@ dist/
 !.env.example
 .vite/
 .vercel/
-api/face.js
 coverage/

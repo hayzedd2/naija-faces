@@ -1,0 +1,2600 @@
+// server/face.ts
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+
+// src/face/config.ts
+var SKINS = [
+  { name: "Porcelain", base: "#f4cdb9", shadow: "#ddab95", light: "#fbe2d5", lip: "#c47e72" },
+  { name: "Fair", base: "#eebda4", shadow: "#d59f84", light: "#f8d8c5", lip: "#bb7062" },
+  { name: "Light", base: "#e2a886", shadow: "#c78b69", light: "#efc0a1", lip: "#b26a58" },
+  { name: "Warm", base: "#d6986f", shadow: "#b97b53", light: "#e5b18b", lip: "#a55e49" },
+  { name: "Olive", base: "#b58a62", shadow: "#96704a", light: "#caa57d", lip: "#8a533f" },
+  { name: "Tan", base: "#c78f64", shadow: "#a66f48", light: "#dcae85", lip: "#955440" },
+  { name: "Golden", base: "#b97e52", shadow: "#98613a", light: "#d09a6d", lip: "#874934" },
+  { name: "Bronze", base: "#a66a41", shadow: "#84502d", light: "#bf865b", lip: "#773d2b" },
+  { name: "Brown", base: "#8e5736", shadow: "#6d3e24", light: "#a97049", lip: "#663224" },
+  { name: "Mahogany", base: "#8a4a32", shadow: "#693322", light: "#a56448", lip: "#5f2a1f" },
+  { name: "Deep", base: "#74442c", shadow: "#57301d", light: "#8d5b3d", lip: "#52261c" },
+  { name: "Espresso", base: "#5b3221", shadow: "#422115", light: "#75482f", lip: "#3f1c15" },
+  { name: "Cocoa", base: "#47271b", shadow: "#311810", light: "#613a2b", lip: "#301510" },
+  { name: "Ebony", base: "#341c13", shadow: "#22100b", light: "#4d2c21", lip: "#25110d" }
+];
+var HAIR_COLORS = [
+  { name: "Jet", value: "#191411" },
+  { name: "Soft black", value: "#251b16" },
+  { name: "Espresso", value: "#32231a" },
+  { name: "Dark brown", value: "#3f2a1d" },
+  { name: "Brown", value: "#543723" },
+  { name: "Chestnut", value: "#6b4526" },
+  { name: "Auburn", value: "#7c3f24" },
+  { name: "Copper", value: "#a2552b" },
+  { name: "Honey", value: "#c08c4f" },
+  { name: "Blonde", value: "#d6b075" },
+  { name: "Platinum", value: "#e7d8b8" },
+  { name: "Ash", value: "#9a958f" },
+  { name: "Silver", value: "#c9c7c4" },
+  { name: "Snow", value: "#eeeae4" }
+];
+var EYE_COLORS = [
+  { name: "Dark brown", value: "#2f1c12" },
+  { name: "Brown", value: "#57351d" },
+  { name: "Amber", value: "#9a6428" },
+  { name: "Hazel", value: "#7c7136" },
+  { name: "Green", value: "#4f6b43" },
+  { name: "Blue", value: "#547c99" },
+  { name: "Gray", value: "#7d8a92" },
+  { name: "Ice", value: "#a8c4cf" }
+];
+var BACKGROUNDS = [
+  { name: "Sky", value: "#a9c7e8" },
+  { name: "Cream", value: "#f3ecdd" },
+  { name: "Butter", value: "#f0d27a" },
+  { name: "Apricot", value: "#f2b28c" },
+  { name: "Coral", value: "#ec8b74" },
+  { name: "Rose", value: "#e7a3ad" },
+  { name: "Lilac", value: "#c3b2e0" },
+  { name: "Sage", value: "#b8c9a4" },
+  { name: "Mint", value: "#a5d6c3" },
+  { name: "Teal", value: "#78b5b2" },
+  { name: "Slate", value: "#9aa8b6" },
+  { name: "Charcoal", value: "#343a40" },
+  { name: "Clay", value: "#c97b5a" },
+  { name: "Olive", value: "#b0aa6b" },
+  { name: "Powder", value: "#dfe7f0" },
+  { name: "Bubblegum", value: "#f2b8cf" }
+];
+var FABRICS = [
+  { name: "Indigo", value: "#2f4f7f" },
+  { name: "Magenta", value: "#b8326b" },
+  { name: "Gold", value: "#c99a3f" },
+  { name: "Coral", value: "#d96a4f" },
+  { name: "Emerald", value: "#2f6b4f" },
+  { name: "Burgundy", value: "#7a2e3a" },
+  { name: "Cream", value: "#e9d9b8" },
+  { name: "Teal", value: "#2f7f7a" },
+  { name: "Aso oke", value: "#b8326b", pattern: "aso-oke" }
+];
+var HEADWEAR = [
+  { name: "None", note: "No headwear" },
+  { name: "Gele", note: "Yoruba head tie", recolor: true },
+  { name: "Filah", note: "Hausa/Fulani cap" },
+  { name: "Okpu Agu", note: "Igbo cap" },
+  { name: "Fula/Kufi", note: "Hausa/Fulani round cap" }
+];
+var FACE_SHAPES = ["Classic", "Round", "Square", "Long", "Heart"];
+var HAIR_STYLES = [
+  "Fade",
+  "Buzz",
+  "Afro",
+  "Curls",
+  "Waves",
+  "Locs",
+  "Long",
+  "Bob",
+  "Bald",
+  "Pompadour"
+];
+var BROWS = ["Serious", "Straight", "Arched", "Soft", "Bushy", "Thin"];
+var EYES = ["Almond", "Round", "Hooded", "Wide", "Sleepy", "Sharp"];
+var NOSES = ["Broad", "Narrow", "Button", "Roman", "Flat"];
+var MOUTHS = ["Neutral", "Smile", "Smirk", "Grin", "Frown", "Full"];
+var BEARDS = [
+  "Clean",
+  "Stubble",
+  "Mustache",
+  "Goatee",
+  "Chin strap",
+  "Full beard",
+  "Short beard"
+];
+var GLASSES = ["None", "Round", "Rectangle", "Sun"];
+var EARRINGS = [
+  "None",
+  "Hoops",
+  "Studs",
+  "Drops",
+  "Coral drops",
+  "Gold chandelier",
+  "Cowrie"
+];
+var MARKS = ["None", "Pele", "Peue", "Abaja"];
+var MARK_NOTES = [
+  "No facial marks",
+  "Yoruba cheek marks",
+  "Yoruba temple marks",
+  "Igbo facial marks"
+];
+var NECKLACES = ["None", "Coral beads", "Gold chain", "Cowrie", "Beaded collar"];
+var NECKLACE_NOTES = [
+  "No necklace",
+  "Coral bead strands",
+  "Fine gold chain",
+  "Cowrie shell string",
+  "Beaded collar"
+];
+var DEFAULT_TRAITS = {
+  skin: 8,
+  face: 0,
+  hair: 0,
+  hairColor: 1,
+  headwear: 0,
+  fabric: 0,
+  brow: 0,
+  eye: 0,
+  eyeColor: 0,
+  nose: 0,
+  mouth: 0,
+  beard: 1,
+  glasses: 0,
+  earrings: 0,
+  necklace: 0,
+  marks: 0,
+  bg: 0
+};
+var TRAIT_KEYS = [
+  "skin",
+  "face",
+  "hair",
+  "hairColor",
+  "headwear",
+  "fabric",
+  "brow",
+  "eye",
+  "eyeColor",
+  "nose",
+  "mouth",
+  "beard",
+  "glasses",
+  "earrings",
+  "necklace",
+  "marks",
+  "bg"
+];
+var OPTION_COUNTS = {
+  skin: SKINS.length,
+  face: FACE_SHAPES.length,
+  hair: HAIR_STYLES.length,
+  hairColor: HAIR_COLORS.length,
+  headwear: HEADWEAR.length,
+  fabric: FABRICS.length,
+  brow: BROWS.length,
+  eye: EYES.length,
+  eyeColor: EYE_COLORS.length,
+  nose: NOSES.length,
+  mouth: MOUTHS.length,
+  beard: BEARDS.length,
+  glasses: GLASSES.length,
+  earrings: EARRINGS.length,
+  necklace: NECKLACES.length,
+  marks: MARKS.length,
+  bg: BACKGROUNDS.length
+};
+var CATEGORIES = [
+  { key: "skin", label: "Skin", options: SKINS.map((s) => ({ label: s.name, color: s.base })) },
+  { key: "face", label: "Face", options: FACE_SHAPES.map((label) => ({ label })) },
+  { key: "hair", label: "Hair", options: HAIR_STYLES.map((label) => ({ label })) },
+  {
+    key: "hairColor",
+    label: "Hair color",
+    options: HAIR_COLORS.map((c) => ({ label: c.name, color: c.value }))
+  },
+  {
+    key: "headwear",
+    label: "Headwear",
+    options: HEADWEAR.map((h) => ({ label: h.name, note: h.note }))
+  },
+  {
+    key: "fabric",
+    label: "Fabric",
+    options: FABRICS.map((f) => ({ label: f.name, color: f.value }))
+  },
+  { key: "brow", label: "Brows", options: BROWS.map((label) => ({ label })) },
+  { key: "eye", label: "Eyes", options: EYES.map((label) => ({ label })) },
+  {
+    key: "eyeColor",
+    label: "Eye color",
+    options: EYE_COLORS.map((c) => ({ label: c.name, color: c.value }))
+  },
+  { key: "nose", label: "Nose", options: NOSES.map((label) => ({ label })) },
+  { key: "mouth", label: "Mouth", options: MOUTHS.map((label) => ({ label })) },
+  { key: "beard", label: "Beard", options: BEARDS.map((label) => ({ label })) },
+  { key: "glasses", label: "Glasses", options: GLASSES.map((label) => ({ label })) },
+  { key: "earrings", label: "Earrings", options: EARRINGS.map((label) => ({ label })) },
+  {
+    key: "necklace",
+    label: "Necklace",
+    options: NECKLACES.map((label, i) => ({ label, note: NECKLACE_NOTES[i] }))
+  },
+  {
+    key: "marks",
+    label: "Facial marks",
+    options: MARKS.map((label, i) => ({ label, note: MARK_NOTES[i] }))
+  },
+  {
+    key: "bg",
+    label: "Background",
+    options: BACKGROUNDS.map((c) => ({ label: c.name, color: c.value }))
+  }
+];
+var COMBINATION_COUNT = TRAIT_KEYS.reduce(
+  (total, key) => total * OPTION_COUNTS[key],
+  1
+);
+
+// src/face/codec.ts
+var VERSION = "2";
+var V1_KEYS = [
+  "skin",
+  "face",
+  "hair",
+  "hairColor",
+  "brow",
+  "eye",
+  "eyeColor",
+  "nose",
+  "mouth",
+  "beard",
+  "glasses",
+  "earrings",
+  "bg"
+];
+function decodeBody(raw, keys) {
+  if (raw.length !== keys.length) return null;
+  const next = { ...DEFAULT_TRAITS };
+  for (let i = 0; i < keys.length; i += 1) {
+    const key = keys[i];
+    const value = Number.parseInt(raw[i], 36);
+    if (!Number.isFinite(value) || value < 0 || value >= OPTION_COUNTS[key]) {
+      return null;
+    }
+    next[key] = value;
+  }
+  return next;
+}
+function decodeTraits(code) {
+  if (!code) return null;
+  if (code.startsWith(VERSION) && code.length === TRAIT_KEYS.length + 1) {
+    return decodeBody(code.slice(1), TRAIT_KEYS);
+  }
+  if (code.startsWith("1") && code.length === V1_KEYS.length + 1) {
+    return decodeBody(code.slice(1), V1_KEYS);
+  }
+  if (code.length === TRAIT_KEYS.length) {
+    return decodeBody(code, TRAIT_KEYS);
+  }
+  if (code.length === V1_KEYS.length) {
+    return decodeBody(code, V1_KEYS);
+  }
+  return null;
+}
+
+// src/face/Face.tsx
+import { useId } from "react";
+
+// src/face/geometry.ts
+var FACE_PATHS = [
+  // Classic
+  "M256 64 C306 64 340 84 349 128 C354 154 356 182 356 212 C356 248 353 278 345 307 C336 340 320 364 300 379 C286 389 271 393 256 393 C241 393 226 389 212 379 C192 364 176 340 167 307 C159 278 156 248 156 212 C156 182 158 154 163 128 C172 84 206 64 256 64 Z",
+  // Round
+  "M256 68 C312 68 348 94 354 146 C358 178 359 214 357 246 C355 292 340 330 314 360 C298 378 278 386 256 386 C234 386 214 378 198 360 C172 330 157 292 155 246 C153 214 154 178 158 146 C164 94 200 68 256 68 Z",
+  // Square
+  "M256 62 C310 62 346 86 353 134 C357 160 358 190 358 220 C358 258 355 290 349 318 C342 350 326 374 304 388 C288 397 272 400 256 400 C240 400 224 397 208 388 C186 374 170 350 163 318 C157 290 154 258 154 220 C154 190 155 160 159 134 C166 86 202 62 256 62 Z",
+  // Long
+  "M256 58 C306 58 338 82 345 128 C350 156 351 190 351 224 C351 268 347 306 338 338 C329 370 312 396 288 408 C278 413 267 416 256 416 C245 416 234 413 224 408 C200 396 183 370 174 338 C165 306 161 268 161 224 C161 190 162 156 167 128 C174 82 206 58 256 58 Z",
+  // Heart
+  "M256 64 C310 64 346 84 352 130 C356 156 357 184 356 212 C355 248 348 278 336 304 C324 332 305 356 282 374 C275 380 266 386 256 392 C246 386 237 380 230 374 C207 356 188 332 176 304 C164 278 157 248 156 212 C155 184 156 156 160 130 C166 84 202 64 256 64 Z"
+];
+function facePath(index) {
+  return FACE_PATHS[index] ?? FACE_PATHS[0];
+}
+var EYE_Y = 233;
+var EYE_LEFT_X = 210;
+var EYE_RIGHT_X = 302;
+var BROW_Y = 203;
+
+// src/face/color.ts
+function hexToRgb(hex) {
+  const clean = hex.replace("#", "");
+  const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
+  const num = parseInt(full, 16);
+  return [num >> 16 & 255, num >> 8 & 255, num & 255];
+}
+function rgbToHex(r, g, b) {
+  const toHex = (n) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+function mix(a, b, amount) {
+  const [ar, ag, ab] = hexToRgb(a);
+  const [br, bg, bb] = hexToRgb(b);
+  return rgbToHex(
+    ar + (br - ar) * amount,
+    ag + (bg - ag) * amount,
+    ab + (bb - ab) * amount
+  );
+}
+function shade(hex, amount) {
+  return amount >= 0 ? mix(hex, "#ffffff", amount) : mix(hex, "#000000", -amount);
+}
+function alpha(hex, opacity) {
+  const [r, g, b] = hexToRgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+}
+
+// src/face/features/Brows.tsx
+import { jsx, jsxs } from "react/jsx-runtime";
+var BROW_PATHS = [
+  "M-35 3 C-22 -1 -10 -2 2 -1 C15 0 27 3 35 8 L33 17 C24 12 12 10 1 9 C-11 8 -23 11 -35 15 Z",
+  "M-35 5 C-20 2 -8 1 2 1 C14 1 26 3 35 6 L34 14 C24 11 12 10 1 10 C-10 10 -23 12 -35 14 Z",
+  "M-34 10 C-25 2 -14 -3 0 -3 C14 -3 26 1 34 7 L33 14 C25 9 14 6 1 6 C-12 6 -24 10 -33 18 Z",
+  "M-34 7 C-22 3 -10 1 2 2 C14 3 25 6 33 10 L32 14 C23 11 12 9 1 9 C-11 9 -23 11 -34 13 Z",
+  "M-36 1 C-23 -3 -10 -4 2 -3 C16 -2 28 1 36 6 L34 19 C25 14 12 11 1 10 C-11 9 -24 12 -36 17 Z",
+  "M-33 7 C-20 4 -8 3 2 4 C14 5 25 7 33 10 L32 12 C23 10 12 9 1 9 C-11 9 -23 10 -33 11 Z"
+];
+function Brows({ value, hairColor }) {
+  const color = mix(shade(hairColor, -0.18), "#241811", 0.16);
+  const path = BROW_PATHS[value] ?? BROW_PATHS[0];
+  return /* @__PURE__ */ jsxs("g", { fill: color, children: [
+    /* @__PURE__ */ jsxs("g", { transform: `translate(${EYE_LEFT_X} ${BROW_Y})`, children: [
+      /* @__PURE__ */ jsx("path", { d: path }),
+      value === 4 && /* @__PURE__ */ jsxs("g", { stroke: shade(hairColor, 0.18), strokeWidth: "1.2", strokeLinecap: "round", opacity: ".45", children: [
+        /* @__PURE__ */ jsx("path", { d: "M-26 8 L-14 6" }),
+        /* @__PURE__ */ jsx("path", { d: "M-8 6 L6 6" }),
+        /* @__PURE__ */ jsx("path", { d: "M14 7 L26 10" })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs("g", { transform: `translate(${EYE_RIGHT_X} ${BROW_Y}) scale(-1 1)`, children: [
+      /* @__PURE__ */ jsx("path", { d: path }),
+      value === 4 && /* @__PURE__ */ jsxs("g", { stroke: shade(hairColor, 0.18), strokeWidth: "1.2", strokeLinecap: "round", opacity: ".45", children: [
+        /* @__PURE__ */ jsx("path", { d: "M-26 8 L-14 6" }),
+        /* @__PURE__ */ jsx("path", { d: "M-8 6 L6 6" }),
+        /* @__PURE__ */ jsx("path", { d: "M14 7 L26 10" })
+      ] })
+    ] })
+  ] });
+}
+
+// src/face/features/Beard.tsx
+import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
+function beardHasMustache(value) {
+  return value === 1 || value === 2 || value === 3 || value === 5 || value === 6;
+}
+function BeardBase({ value, color, shape, id }) {
+  if (value === 0 || value === 2) return null;
+  const dark = shade(color, -0.3);
+  const light = shade(color, 0.18);
+  const path = facePath(shape);
+  const clip = `url(#beard-clip-${id})`;
+  const defs = /* @__PURE__ */ jsxs2("defs", { children: [
+    /* @__PURE__ */ jsx2("clipPath", { id: `beard-clip-${id}`, children: /* @__PURE__ */ jsx2("path", { d: path }) }),
+    /* @__PURE__ */ jsx2("mask", { id: `beard-fade-${id}`, maskUnits: "userSpaceOnUse", x: "0", y: "236", width: "512", height: "276", children: /* @__PURE__ */ jsx2("rect", { x: "0", y: "236", width: "512", height: "276", fill: `url(#beard-fade-grad-${id})` }) }),
+    /* @__PURE__ */ jsxs2(
+      "linearGradient",
+      {
+        id: `beard-fade-grad-${id}`,
+        x1: "0",
+        y1: "248",
+        x2: "0",
+        y2: "312",
+        gradientUnits: "userSpaceOnUse",
+        children: [
+          /* @__PURE__ */ jsx2("stop", { offset: "0", stopColor: "#000000" }),
+          /* @__PURE__ */ jsx2("stop", { offset: "1", stopColor: "#ffffff" })
+        ]
+      }
+    ),
+    /* @__PURE__ */ jsxs2("pattern", { id: `stubble-${id}`, width: "4", height: "4", patternUnits: "userSpaceOnUse", children: [
+      /* @__PURE__ */ jsx2("circle", { cx: "1", cy: "1", r: ".75", fill: color }),
+      /* @__PURE__ */ jsx2("circle", { cx: "3", cy: "2.8", r: ".6", fill: color })
+    ] })
+  ] });
+  if (value === 1) {
+    return /* @__PURE__ */ jsxs2("g", { children: [
+      defs,
+      /* @__PURE__ */ jsx2("g", { clipPath: clip, children: /* @__PURE__ */ jsx2(
+        "path",
+        {
+          d: "M150 296 C176 322 214 346 240 356 C248 359 252 361 256 361 C260 361 264 359 272 356 C298 346 336 322 362 296 L362 512 L150 512 Z",
+          fill: `url(#stubble-${id})`,
+          opacity: ".62"
+        }
+      ) })
+    ] });
+  }
+  if (value === 4) {
+    return /* @__PURE__ */ jsxs2("g", { children: [
+      defs,
+      /* @__PURE__ */ jsxs2("g", { clipPath: clip, mask: `url(#beard-fade-${id})`, children: [
+        /* @__PURE__ */ jsx2("path", { d: path, fill: "none", stroke: color, strokeWidth: "26" }),
+        /* @__PURE__ */ jsx2(
+          "path",
+          {
+            d: path,
+            fill: "none",
+            stroke: alpha(light, 0.3),
+            strokeWidth: "2",
+            transform: "translate(0 -0.6)"
+          }
+        )
+      ] })
+    ] });
+  }
+  if (value === 5) {
+    return /* @__PURE__ */ jsxs2("g", { children: [
+      defs,
+      /* @__PURE__ */ jsxs2("g", { clipPath: clip, children: [
+        /* @__PURE__ */ jsx2(
+          "path",
+          {
+            d: "M150 286 C176 316 214 344 240 356 C248 359 252 361 256 361 C260 361 264 359 272 356 C298 344 336 316 362 286 L362 512 L150 512 Z",
+            fill: color
+          }
+        ),
+        /* @__PURE__ */ jsx2(
+          "path",
+          {
+            d: "M256 362 C246 362 240 365 236 370 C242 376 249 379 256 379 C263 379 270 376 276 370 C272 365 266 362 256 362 Z",
+            fill: dark,
+            opacity: ".55"
+          }
+        )
+      ] })
+    ] });
+  }
+  if (value === 6) {
+    return /* @__PURE__ */ jsxs2("g", { children: [
+      defs,
+      /* @__PURE__ */ jsxs2("g", { clipPath: clip, children: [
+        /* @__PURE__ */ jsx2(
+          "path",
+          {
+            d: "M154 306 C180 330 216 352 240 362 C248 365 252 367 256 367 C260 367 264 365 272 362 C296 352 332 330 358 306 L358 512 L154 512 Z",
+            fill: color,
+            opacity: ".92"
+          }
+        ),
+        /* @__PURE__ */ jsx2(
+          "path",
+          {
+            d: "M256 356 C247 356 241 359 237 364 C243 369 249 372 256 372 C263 372 269 369 275 364 C271 359 265 356 256 356 Z",
+            fill: dark,
+            opacity: ".45"
+          }
+        )
+      ] })
+    ] });
+  }
+  return /* @__PURE__ */ jsxs2("g", { children: [
+    defs,
+    /* @__PURE__ */ jsxs2("g", { clipPath: clip, children: [
+      /* @__PURE__ */ jsx2(
+        "path",
+        {
+          d: "M228 346 C238 338 274 338 284 346 C292 364 280 386 256 392 C232 386 220 364 228 346 Z",
+          fill: color
+        }
+      ),
+      /* @__PURE__ */ jsx2("ellipse", { cx: "256", cy: "364", rx: "10", ry: "7", fill: light, opacity: ".22" })
+    ] })
+  ] });
+}
+function Mustache({ color, full = false }) {
+  const path = full ? "M256 336 C245 329 230 327 219 331 C210 335 209 343 217 346 C229 341 243 340 252 344 C254 345 255 342 256 336 Z" : "M256 337 C247 332 235 330 225 333 C217 335 215 341 221 344 C230 340 241 339 251 342 C253 343 255 341 256 337 Z";
+  const light = shade(color, 0.18);
+  return /* @__PURE__ */ jsxs2("g", { fill: color, children: [
+    /* @__PURE__ */ jsx2("path", { d: path }),
+    /* @__PURE__ */ jsx2("path", { d: path, transform: "translate(512 0) scale(-1 1)" }),
+    /* @__PURE__ */ jsxs2("g", { stroke: light, strokeWidth: "1.1", strokeLinecap: "round", opacity: ".45", children: [
+      /* @__PURE__ */ jsx2("path", { d: "M230 337 C238 335 245 336 251 340" }),
+      /* @__PURE__ */ jsx2("path", { d: "M282 337 C274 335 267 336 261 340" }),
+      full && /* @__PURE__ */ jsx2("path", { d: "M222 340 C230 337 238 337 244 340" }),
+      full && /* @__PURE__ */ jsx2("path", { d: "M290 340 C282 337 274 337 268 340" })
+    ] })
+  ] });
+}
+
+// src/face/features/Earrings.tsx
+import { jsx as jsx3, jsxs as jsxs3 } from "react/jsx-runtime";
+var GOLD = "#d6a84a";
+var GOLD_LIGHT = "#f0d28a";
+var CORAL = "#e2725b";
+var CORAL_DARK = "#b84f3f";
+var CORAL_LIGHT = "#f5a48b";
+var CREAM = "#f2e8d8";
+var SHELL_DARK = "#a8865f";
+function Earrings({ value }) {
+  if (value === 0) return null;
+  const earX = [146, 366];
+  if (value === 1) {
+    return /* @__PURE__ */ jsx3("g", { fill: "none", stroke: GOLD, strokeWidth: "3.2", children: earX.map((x) => /* @__PURE__ */ jsxs3("g", { children: [
+      /* @__PURE__ */ jsx3("circle", { cx: x, cy: "282", r: "12" }),
+      /* @__PURE__ */ jsx3("path", { d: `M${x} 270 L${x} 274`, strokeLinecap: "round" })
+    ] }, x)) });
+  }
+  if (value === 2) {
+    return /* @__PURE__ */ jsx3("g", { fill: GOLD, children: earX.map((x) => /* @__PURE__ */ jsxs3("g", { children: [
+      /* @__PURE__ */ jsx3("circle", { cx: x, cy: "274", r: "4.6" }),
+      /* @__PURE__ */ jsx3("circle", { cx: x - 1.4, cy: "272.4", r: "1.5", fill: GOLD_LIGHT })
+    ] }, x)) });
+  }
+  if (value === 4) {
+    return /* @__PURE__ */ jsx3("g", { children: earX.map((x) => /* @__PURE__ */ jsxs3("g", { children: [
+      /* @__PURE__ */ jsx3("path", { d: `M${x} 268 L${x} 276`, stroke: GOLD, strokeWidth: "2", strokeLinecap: "round" }),
+      /* @__PURE__ */ jsx3("circle", { cx: x, cy: "278", r: "3", fill: GOLD }),
+      /* @__PURE__ */ jsx3("path", { d: `M${x} 281 L${x} 300`, stroke: CORAL_DARK, strokeWidth: "1.4" }),
+      /* @__PURE__ */ jsx3("circle", { cx: x, cy: "286", r: "4.2", fill: CORAL, stroke: CORAL_DARK, strokeWidth: ".8" }),
+      /* @__PURE__ */ jsx3("circle", { cx: x, cy: "295", r: "5", fill: CORAL, stroke: CORAL_DARK, strokeWidth: ".8" }),
+      /* @__PURE__ */ jsx3("circle", { cx: x - 1.4, cy: "284.5", r: "1.2", fill: CORAL_LIGHT, opacity: ".85" }),
+      /* @__PURE__ */ jsx3("circle", { cx: x - 1.6, cy: "293.4", r: "1.4", fill: CORAL_LIGHT, opacity: ".85" })
+    ] }, x)) });
+  }
+  if (value === 5) {
+    return /* @__PURE__ */ jsx3("g", { children: earX.map((x) => /* @__PURE__ */ jsxs3("g", { children: [
+      /* @__PURE__ */ jsx3("path", { d: `M${x} 268 L${x} 278`, stroke: GOLD, strokeWidth: "2", strokeLinecap: "round" }),
+      /* @__PURE__ */ jsx3("circle", { cx: x, cy: "281", r: "5.5", fill: "none", stroke: GOLD, strokeWidth: "2" }),
+      /* @__PURE__ */ jsx3(
+        "path",
+        {
+          d: `M${x - 6} 286 C${x - 8} 296 ${x - 6} 304 ${x - 2} 308`,
+          stroke: GOLD,
+          strokeWidth: "1.6",
+          fill: "none"
+        }
+      ),
+      /* @__PURE__ */ jsx3(
+        "path",
+        {
+          d: `M${x + 6} 286 C${x + 8} 296 ${x + 6} 304 ${x + 2} 308`,
+          stroke: GOLD,
+          strokeWidth: "1.6",
+          fill: "none"
+        }
+      ),
+      /* @__PURE__ */ jsx3("circle", { cx: x - 2, cy: "310", r: "2.6", fill: GOLD_LIGHT, stroke: GOLD, strokeWidth: ".7" }),
+      /* @__PURE__ */ jsx3("circle", { cx: x + 2, cy: "310", r: "2.6", fill: GOLD_LIGHT, stroke: GOLD, strokeWidth: ".7" }),
+      /* @__PURE__ */ jsx3("circle", { cx: x, cy: "303", r: "2.2", fill: GOLD })
+    ] }, x)) });
+  }
+  if (value === 6) {
+    return /* @__PURE__ */ jsx3("g", { children: earX.map((x) => /* @__PURE__ */ jsxs3("g", { children: [
+      /* @__PURE__ */ jsx3("path", { d: `M${x} 268 L${x} 278`, stroke: GOLD, strokeWidth: "2", strokeLinecap: "round" }),
+      /* @__PURE__ */ jsx3("circle", { cx: x, cy: "280", r: "2.8", fill: GOLD }),
+      /* @__PURE__ */ jsxs3("g", { transform: `translate(${x} 291)`, children: [
+        /* @__PURE__ */ jsx3("ellipse", { cx: "0", cy: "0", rx: "5.4", ry: "7.4", fill: CREAM, stroke: SHELL_DARK, strokeWidth: "1" }),
+        /* @__PURE__ */ jsx3(
+          "path",
+          {
+            d: "M0 -4.4 C-1.8 -1.2 -1.8 1.2 0 4.4 C1.8 1.2 1.8 -1.2 0 -4.4 Z",
+            fill: SHELL_DARK,
+            opacity: ".55"
+          }
+        )
+      ] })
+    ] }, x)) });
+  }
+  return /* @__PURE__ */ jsx3("g", { children: earX.map((x) => /* @__PURE__ */ jsxs3("g", { children: [
+    /* @__PURE__ */ jsx3(
+      "path",
+      {
+        d: `M${x} 268 L${x} 281`,
+        stroke: GOLD,
+        strokeWidth: "1.8",
+        strokeLinecap: "round"
+      }
+    ),
+    /* @__PURE__ */ jsx3("circle", { cx: x, cy: "287", r: "6", fill: GOLD }),
+    /* @__PURE__ */ jsx3("circle", { cx: x - 1.8, cy: "285", r: "1.8", fill: GOLD_LIGHT })
+  ] }, x)) });
+}
+
+// src/face/features/Eyes.tsx
+import { jsx as jsx4, jsxs as jsxs4 } from "react/jsx-runtime";
+var SCLERA = [
+  "M-24 2 C-19 -4 -9 -9 2 -9 C13 -9 21 -4 25 1 C20 6 11 9 1 9 C-10 9 -18 6 -24 2 Z",
+  "M-23 0 C-23 -12 -11 -16 1 -16 C13 -16 23 -12 24 0 C23 11 13 16 1 16 C-11 16 -23 11 -23 0 Z",
+  "M-24 2 C-19 -4 -9 -9 2 -9 C13 -9 21 -4 25 1 C20 6 11 9 1 9 C-10 9 -18 6 -24 2 Z",
+  "M-25 1 C-20 -8 -10 -13 2 -13 C14 -13 23 -8 26 0 C21 8 11 13 1 13 C-10 13 -19 8 -25 1 Z",
+  "M-24 1 C-19 -5 -8 -8 2 -8 C13 -8 22 -4 25 1 C20 6 10 8 0 8 C-10 8 -18 6 -24 1 Z",
+  "M26 4 C14 -6 -2 -12 -14 -9 C-21 -7 -25 -3 -27 -5 C-25 3 -18 11 -8 13 C2 15 16 12 26 4 Z"
+];
+var UPPER = [
+  "M-24 2 C-19 -4 -9 -9 2 -9 C13 -9 21 -4 25 1",
+  "M-23 0 C-23 -12 -11 -16 1 -16 C13 -16 23 -12 24 0",
+  "M-24 2 C-19 -4 -9 -9 2 -9 C13 -9 21 -4 25 1",
+  "M-25 1 C-20 -8 -10 -13 2 -13 C14 -13 23 -8 26 0",
+  "M-24 1 C-19 -5 -8 -8 2 -8 C13 -8 22 -4 25 1",
+  "M26 4 C14 -6 -2 -12 -14 -9 C-21 -7 -25 -3 -27 -5"
+];
+var LOWER = [
+  "M-23 5 C-16 9 -6 11 2 11 C12 11 20 8 25 3",
+  "M-22 5 C-16 13 -6 16 1 16 C12 16 22 12 23 4",
+  "M-23 5 C-16 9 -6 11 2 11 C12 11 20 8 25 3",
+  "M-24 4 C-17 11 -7 15 2 15 C13 15 22 10 26 4",
+  "M-23 3 C-16 7 -6 9 1 9 C12 9 21 6 24 2",
+  "M25 4 C14 12 1 15 -9 13 C-17 11 -23 6 -27 -4"
+];
+var CREASE = [
+  "M-22 -3 C-14 -11 -2 -14 8 -13 C16 -12 22 -8 26 -2",
+  "M-21 -8 C-13 -17 -1 -20 9 -19 C18 -18 24 -13 27 -6",
+  "M-23 -1 C-15 -9 -3 -12 7 -11 C16 -10 22 -6 26 0",
+  "M-23 -6 C-15 -15 -3 -18 8 -17 C18 -16 24 -11 28 -4",
+  "M-22 -3 C-14 -11 -2 -14 8 -13 C16 -12 22 -8 26 -2",
+  "M-23 -8 C-15 -17 -3 -20 7 -19 C16 -18 23 -13 27 -6"
+];
+var IRIS_R = [10.8, 12.5, 10.8, 11.8, 10.2, 10.6];
+function Eye({ value, color, skin, id, side, cx }) {
+  const sclera = SCLERA[value] ?? SCLERA[0];
+  const upper = UPPER[value] ?? UPPER[0];
+  const lower = LOWER[value] ?? LOWER[0];
+  const crease = CREASE[value] ?? CREASE[0];
+  const r = IRIS_R[value] ?? IRIS_R[0];
+  const lash = mix(shade(color, -0.45), "#1d120c", 0.5);
+  const irisDark = shade(color, -0.35);
+  const irisLight = mix(color, "#ffffff", 0.2);
+  const clipId = `eye-clip-${id}-${side}`;
+  const transform = side === "l" ? `translate(${cx} ${EYE_Y})` : `translate(${cx} ${EYE_Y}) scale(-1 1)`;
+  return /* @__PURE__ */ jsxs4("g", { transform, children: [
+    /* @__PURE__ */ jsxs4("defs", { children: [
+      /* @__PURE__ */ jsx4("clipPath", { id: clipId, children: /* @__PURE__ */ jsx4("path", { d: sclera }) }),
+      /* @__PURE__ */ jsxs4("radialGradient", { id: `iris-${id}-${side}`, cx: ".42", cy: ".38", r: ".7", children: [
+        /* @__PURE__ */ jsx4("stop", { offset: "0", stopColor: irisLight }),
+        /* @__PURE__ */ jsx4("stop", { offset: ".62", stopColor: color }),
+        /* @__PURE__ */ jsx4("stop", { offset: "1", stopColor: irisDark })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx4("path", { d: sclera, fill: "#f8f3ea" }),
+    /* @__PURE__ */ jsxs4("g", { clipPath: `url(#${clipId})`, children: [
+      /* @__PURE__ */ jsx4("circle", { cx: "0.5", cy: "0.5", r, fill: `url(#iris-${id}-${side})` }),
+      /* @__PURE__ */ jsx4("circle", { cx: "0.5", cy: "0.5", r, fill: "none", stroke: alpha(irisDark, 0.7), strokeWidth: "1.4" }),
+      /* @__PURE__ */ jsx4("circle", { cx: "0.5", cy: "0.5", r: r * 0.46, fill: "#17100c" }),
+      /* @__PURE__ */ jsx4("circle", { cx: "-3.2", cy: "-3.4", r: "2.3", fill: "#fffdf8", opacity: ".92" }),
+      /* @__PURE__ */ jsx4("circle", { cx: "3.4", cy: "3.4", r: "1.15", fill: "#fffdf8", opacity: ".45" }),
+      /* @__PURE__ */ jsx4("path", { d: upper, fill: "none", stroke: alpha(skin.shadow, 0.45), strokeWidth: "4" }),
+      value === 2 && /* @__PURE__ */ jsx4(
+        "path",
+        {
+          d: "M-24 2 C-19 -4 -9 -9 2 -9 C13 -9 21 -4 25 1 L25 2 C13 0 2 -1 -5 1 C-13 3 -19 5 -24 6 Z",
+          fill: skin.base
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsx4(
+      "path",
+      {
+        d: upper,
+        fill: "none",
+        stroke: lash,
+        strokeWidth: value === 2 ? 3.8 : 3.2,
+        strokeLinecap: "round"
+      }
+    ),
+    /* @__PURE__ */ jsx4(
+      "path",
+      {
+        d: lower,
+        fill: "none",
+        stroke: lash,
+        strokeWidth: "1.5",
+        strokeLinecap: "round",
+        opacity: ".28"
+      }
+    ),
+    /* @__PURE__ */ jsx4(
+      "path",
+      {
+        d: crease,
+        fill: "none",
+        stroke: lash,
+        strokeWidth: "1.8",
+        strokeLinecap: "round",
+        opacity: ".16"
+      }
+    )
+  ] });
+}
+function Eyes({ value, color, skin, id }) {
+  return /* @__PURE__ */ jsxs4("g", { children: [
+    /* @__PURE__ */ jsx4(Eye, { value, color, skin, id, side: "l", cx: EYE_LEFT_X }),
+    /* @__PURE__ */ jsx4(Eye, { value, color, skin, id, side: "r", cx: EYE_RIGHT_X })
+  ] });
+}
+
+// src/face/features/Glasses.tsx
+import { jsx as jsx5, jsxs as jsxs5 } from "react/jsx-runtime";
+function Glasses({ value }) {
+  if (value === 0) return null;
+  const frame = "#2b2320";
+  if (value === 1) {
+    return /* @__PURE__ */ jsxs5("g", { fill: "none", stroke: frame, strokeWidth: "3.6", strokeLinecap: "round", children: [
+      /* @__PURE__ */ jsx5("circle", { cx: EYE_LEFT_X, cy: "238", r: "32", fill: "rgba(220,235,245,.16)" }),
+      /* @__PURE__ */ jsx5("circle", { cx: EYE_RIGHT_X, cy: "238", r: "32", fill: "rgba(220,235,245,.16)" }),
+      /* @__PURE__ */ jsx5("path", { d: "M242 234 C246 229 262 229 266 234" }),
+      /* @__PURE__ */ jsx5("path", { d: "M178 233 L162 228" }),
+      /* @__PURE__ */ jsx5("path", { d: "M334 233 L350 228" }),
+      /* @__PURE__ */ jsx5("path", { d: "M186 224 C192 216 202 212 212 212", stroke: "rgba(255,255,255,.45)", strokeWidth: "1.6" }),
+      /* @__PURE__ */ jsx5("path", { d: "M278 224 C284 216 294 212 304 212", stroke: "rgba(255,255,255,.45)", strokeWidth: "1.6" })
+    ] });
+  }
+  if (value === 2) {
+    return /* @__PURE__ */ jsxs5("g", { fill: "none", stroke: frame, strokeWidth: "3.6", strokeLinecap: "round", children: [
+      /* @__PURE__ */ jsx5("rect", { x: "174", y: "216", width: "72", height: "44", rx: "11", fill: "rgba(220,235,245,.14)" }),
+      /* @__PURE__ */ jsx5("rect", { x: "266", y: "216", width: "72", height: "44", rx: "11", fill: "rgba(220,235,245,.14)" }),
+      /* @__PURE__ */ jsx5("path", { d: "M246 230 C250 225 262 225 266 230" }),
+      /* @__PURE__ */ jsx5("path", { d: "M174 228 L158 224" }),
+      /* @__PURE__ */ jsx5("path", { d: "M338 228 L354 224" }),
+      /* @__PURE__ */ jsx5("path", { d: "M182 224 L196 224", stroke: "rgba(255,255,255,.4)", strokeWidth: "1.6" }),
+      /* @__PURE__ */ jsx5("path", { d: "M274 224 L288 224", stroke: "rgba(255,255,255,.4)", strokeWidth: "1.6" })
+    ] });
+  }
+  return /* @__PURE__ */ jsxs5("g", { children: [
+    /* @__PURE__ */ jsx5("rect", { x: "172", y: "212", width: "76", height: "50", rx: "14", fill: "#241d19", opacity: ".92" }),
+    /* @__PURE__ */ jsx5("rect", { x: "264", y: "212", width: "76", height: "50", rx: "14", fill: "#241d19", opacity: ".92" }),
+    /* @__PURE__ */ jsxs5("g", { stroke: frame, strokeWidth: "3.6", strokeLinecap: "round", children: [
+      /* @__PURE__ */ jsx5("path", { d: "M248 232 C252 227 260 227 264 232", fill: "none" }),
+      /* @__PURE__ */ jsx5("path", { d: "M172 228 L156 224", fill: "none" }),
+      /* @__PURE__ */ jsx5("path", { d: "M340 228 L356 224", fill: "none" })
+    ] }),
+    /* @__PURE__ */ jsxs5("g", { stroke: "rgba(255,255,255,.22)", strokeWidth: "2.2", strokeLinecap: "round", children: [
+      /* @__PURE__ */ jsx5("path", { d: "M184 244 L200 224" }),
+      /* @__PURE__ */ jsx5("path", { d: "M276 244 L292 224" })
+    ] }),
+    /* @__PURE__ */ jsxs5("g", { stroke: "rgba(255,255,255,.1)", strokeWidth: "1.4", strokeLinecap: "round", children: [
+      /* @__PURE__ */ jsx5("path", { d: "M190 248 L210 222" }),
+      /* @__PURE__ */ jsx5("path", { d: "M282 248 L302 222" })
+    ] })
+  ] });
+}
+
+// src/face/features/Hair.tsx
+import { jsx as jsx6, jsxs as jsxs6 } from "react/jsx-runtime";
+var CAP_FADE = "M256 56 C318 56 358 84 362 134 C363 148 362 164 359 180 C354 168 349 158 343 152 C337 146 328 142 318 138 C302 130 282 125 256 124 C230 125 210 130 194 138 C184 142 175 146 169 152 C163 158 158 168 153 180 C150 164 149 148 150 134 C154 84 194 56 256 56 Z";
+var CAP_BUZZ = "M256 58 C314 58 352 84 357 132 C359 148 358 162 355 172 C349 162 344 155 338 150 C330 144 320 141 308 140 C292 136 276 134 256 134 C236 134 220 136 204 140 C192 141 182 144 174 150 C168 155 163 162 157 172 C154 162 153 148 155 132 C160 84 198 58 256 58 Z";
+var AFRO_FRONT = "M256 60 C314 60 350 86 355 134 C356 144 355 152 353 158 C346 146 338 138 328 134 C312 128 286 126 256 126 C226 126 200 128 184 134 C174 138 166 146 159 158 C157 152 156 144 157 134 C162 86 198 60 256 60 Z";
+var AFRO_BACK = "M256 26 C268 18 282 22 290 32 C304 24 320 28 328 42 C344 42 356 54 358 68 C372 76 378 92 372 106 C384 118 384 136 374 148 C382 162 376 180 362 188 C360 202 348 212 334 212 L178 212 C164 212 152 202 150 188 C136 180 130 162 138 148 C128 136 128 118 140 106 C134 92 140 76 154 68 C156 54 168 42 184 42 C192 28 208 24 222 32 C230 22 244 18 256 26 Z";
+var CURLS_BASE = "M256 62 C310 62 348 88 354 136 C355 148 354 160 351 170 C346 160 340 152 333 147 C324 141 312 138 300 137 C286 134 272 133 256 133 C240 133 226 134 212 137 C200 138 188 141 179 147 C172 152 166 160 161 170 C158 160 157 148 158 136 C164 88 202 62 256 62 Z";
+var LONG_BACK = "M256 48 C332 48 382 100 386 180 L388 402 C388 430 370 446 344 446 L168 446 C142 446 124 430 124 402 L126 180 C130 100 180 48 256 48 Z";
+var LONG_TOP_LEFT = "M256 58 C220 58 190 72 174 96 C160 118 152 150 150 184 L150 212 C164 198 176 178 184 156 C192 134 206 114 226 98 C236 90 248 76 256 58 Z";
+var LONG_CURTAIN_LEFT = "M150 170 C146 210 145 260 147 300 C148 318 158 328 170 326 C182 324 188 312 190 296 C193 264 190 238 184 214 C180 196 182 180 188 166 C194 152 202 142 212 134 C196 142 182 154 172 168 C164 180 156 186 150 184 Z";
+var BOB_BACK = "M256 50 C330 50 380 100 384 176 L386 326 C386 352 370 368 344 368 L168 368 C142 368 126 352 126 326 L128 176 C132 100 182 50 256 50 Z";
+var BOB_BANGS = "M256 54 C318 54 358 84 362 142 L362 158 C350 172 336 180 318 176 C300 171 280 168 256 168 C232 168 212 171 194 176 C176 180 162 172 150 158 L150 142 C154 84 194 54 256 54 Z";
+var BOB_SIDE_LEFT = "M150 150 C146 200 145 252 148 296 C149 314 158 324 170 322 C181 320 187 310 188 294 C190 262 188 232 183 206 C180 190 180 174 185 160 C172 168 160 164 150 150 Z";
+var POMPADOUR = "M256 34 C296 28 326 44 338 70 C348 90 352 114 354 136 C355 150 354 162 351 172 C346 160 340 152 332 147 C318 139 292 134 256 134 C220 134 192 139 178 147 C170 152 164 160 159 172 C156 162 155 150 156 136 C158 112 164 92 174 74 C186 52 216 40 256 34 Z";
+var LOC_STRANDS_LEFT = [
+  "M230 68 C212 116 202 194 206 300",
+  "M216 74 C196 122 184 204 188 322",
+  "M204 84 C182 130 170 208 174 346",
+  "M190 94 C166 146 154 230 158 374",
+  "M176 106 C152 160 140 244 144 402",
+  "M162 124 C138 180 128 262 132 422",
+  "M150 146 C128 200 120 278 124 438",
+  "M140 176 C122 228 116 298 120 448",
+  "M132 204 C116 252 112 312 116 454"
+];
+function Loc({ d, color, width = 13 }) {
+  return /* @__PURE__ */ jsxs6("g", { children: [
+    /* @__PURE__ */ jsx6("path", { d, stroke: color, strokeWidth: width, strokeLinecap: "round", fill: "none" }),
+    /* @__PURE__ */ jsx6(
+      "path",
+      {
+        d,
+        stroke: shade(color, 0.2),
+        strokeWidth: width * 0.26,
+        strokeLinecap: "round",
+        fill: "none",
+        opacity: ".5",
+        transform: "translate(-1.4 0)"
+      }
+    ),
+    /* @__PURE__ */ jsx6(
+      "path",
+      {
+        d,
+        stroke: alpha(shade(color, -0.4), 0.5),
+        strokeWidth: "1.3",
+        strokeLinecap: "round",
+        fill: "none",
+        transform: "translate(2.2 0)"
+      }
+    )
+  ] });
+}
+function HairBack({ value, color, id }) {
+  if (value === 2) {
+    return /* @__PURE__ */ jsxs6("g", { children: [
+      /* @__PURE__ */ jsxs6("defs", { children: [
+        /* @__PURE__ */ jsx6("clipPath", { id: `afro-clip-${id}`, children: /* @__PURE__ */ jsx6("path", { d: AFRO_BACK }) }),
+        /* @__PURE__ */ jsxs6("pattern", { id: `afro-dots-${id}`, width: "18", height: "18", patternUnits: "userSpaceOnUse", children: [
+          /* @__PURE__ */ jsx6("circle", { cx: "4", cy: "4", r: "2.4", fill: alpha(shade(color, 0.22), 0.5) }),
+          /* @__PURE__ */ jsx6("circle", { cx: "13", cy: "12", r: "2", fill: alpha(shade(color, -0.25), 0.4) })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsx6("path", { d: AFRO_BACK, fill: color }),
+      /* @__PURE__ */ jsxs6("g", { clipPath: `url(#afro-clip-${id})`, children: [
+        /* @__PURE__ */ jsx6("rect", { x: "110", y: "10", width: "292", height: "210", fill: `url(#afro-dots-${id})` }),
+        /* @__PURE__ */ jsx6("ellipse", { cx: "210", cy: "74", rx: "70", ry: "42", fill: shade(color, 0.12), opacity: ".35" })
+      ] })
+    ] });
+  }
+  if (value === 5) {
+    return /* @__PURE__ */ jsxs6("g", { children: [
+      LOC_STRANDS_LEFT.map((d) => /* @__PURE__ */ jsx6(Loc, { d, color }, d)),
+      /* @__PURE__ */ jsx6("g", { transform: "translate(512 0) scale(-1 1)", children: LOC_STRANDS_LEFT.map((d) => /* @__PURE__ */ jsx6(Loc, { d, color }, d)) }),
+      /* @__PURE__ */ jsxs6("g", { fill: "#d6a84a", stroke: "#8a6420", strokeWidth: ".8", children: [
+        /* @__PURE__ */ jsx6("ellipse", { cx: "128", cy: "318", rx: "7.5", ry: "4", transform: "rotate(-10 128 318)" }),
+        /* @__PURE__ */ jsx6("ellipse", { cx: "140", cy: "356", rx: "7.5", ry: "4", transform: "rotate(-8 140 356)" }),
+        /* @__PURE__ */ jsx6("ellipse", { cx: "384", cy: "318", rx: "7.5", ry: "4", transform: "rotate(10 384 318)" }),
+        /* @__PURE__ */ jsx6("ellipse", { cx: "372", cy: "356", rx: "7.5", ry: "4", transform: "rotate(8 372 356)" })
+      ] })
+    ] });
+  }
+  if (value === 6) {
+    return /* @__PURE__ */ jsxs6("g", { children: [
+      /* @__PURE__ */ jsx6("path", { d: LONG_BACK, fill: color }),
+      /* @__PURE__ */ jsx6(
+        "path",
+        {
+          d: "M256 70 C212 70 176 90 156 126 C142 150 136 180 136 214 L136 398 C136 414 146 424 160 424 L352 424 C366 424 376 414 376 398 L376 214 C376 180 370 150 356 126 C336 90 300 70 256 70 Z",
+          fill: alpha(shade(color, -0.18), 0.5)
+        }
+      )
+    ] });
+  }
+  if (value === 7) {
+    return /* @__PURE__ */ jsxs6("g", { children: [
+      /* @__PURE__ */ jsx6("path", { d: BOB_BACK, fill: color }),
+      /* @__PURE__ */ jsx6(
+        "path",
+        {
+          d: "M256 66 C204 66 168 88 152 128 C144 150 142 180 144 214 L144 320 C144 334 154 344 168 344 L344 344 C358 344 368 334 368 320 L368 214 C370 180 368 150 360 128 C344 88 308 66 256 66 Z",
+          fill: alpha(shade(color, -0.16), 0.45)
+        }
+      )
+    ] });
+  }
+  return null;
+}
+var SHINE_PATH = "M198 104 C212 82 232 70 256 68 C240 78 224 92 214 110 C206 126 202 138 200 148 C192 136 190 120 198 104 Z";
+function HairShine({ id, children }) {
+  return /* @__PURE__ */ jsxs6("g", { children: [
+    /* @__PURE__ */ jsx6("defs", { children: /* @__PURE__ */ jsx6("clipPath", { id: `shine-${id}`, children }) }),
+    /* @__PURE__ */ jsx6("path", { d: SHINE_PATH, fill: "#ffffff", opacity: ".065", clipPath: `url(#shine-${id})` })
+  ] });
+}
+function HairFront({ value, color, skin, id }) {
+  const dark = shade(color, -0.28);
+  const light = shade(color, 0.18);
+  if (value === 8) {
+    return /* @__PURE__ */ jsx6("ellipse", { cx: "228", cy: "92", rx: "56", ry: "24", fill: "#ffffff", opacity: ".06" });
+  }
+  if (value === 2) {
+    return /* @__PURE__ */ jsxs6("g", { children: [
+      /* @__PURE__ */ jsx6("path", { d: AFRO_FRONT, fill: color }),
+      /* @__PURE__ */ jsx6(HairShine, { id, children: /* @__PURE__ */ jsx6("path", { d: AFRO_FRONT }) })
+    ] });
+  }
+  if (value === 3) {
+    const puffs = [
+      [196, 88, 24],
+      [218, 68, 27],
+      [246, 58, 29],
+      [276, 58, 29],
+      [306, 68, 27],
+      [330, 88, 24],
+      [176, 112, 20],
+      [344, 112, 20]
+    ];
+    return /* @__PURE__ */ jsxs6("g", { children: [
+      /* @__PURE__ */ jsx6("g", { fill: color, children: puffs.map(([cx, cy, r]) => /* @__PURE__ */ jsx6("circle", { cx, cy, r }, `${cx}-${cy}`)) }),
+      /* @__PURE__ */ jsxs6("g", { fill: "none", stroke: dark, strokeWidth: "2.2", strokeLinecap: "round", opacity: ".35", children: [
+        /* @__PURE__ */ jsx6("path", { d: "M186 96 C194 86 204 82 214 84" }),
+        /* @__PURE__ */ jsx6("path", { d: "M218 70 C228 62 240 60 250 64" }),
+        /* @__PURE__ */ jsx6("path", { d: "M282 62 C292 60 302 64 310 72" }),
+        /* @__PURE__ */ jsx6("path", { d: "M324 88 C332 92 338 100 340 110" }),
+        /* @__PURE__ */ jsx6("path", { d: "M178 122 C182 116 188 112 194 112" })
+      ] }),
+      /* @__PURE__ */ jsx6("path", { d: CURLS_BASE, fill: color }),
+      /* @__PURE__ */ jsx6(HairShine, { id, children: /* @__PURE__ */ jsx6("path", { d: CURLS_BASE }) })
+    ] });
+  }
+  if (value === 5) {
+    return /* @__PURE__ */ jsxs6("g", { children: [
+      /* @__PURE__ */ jsx6("path", { d: CAP_FADE, fill: color }),
+      /* @__PURE__ */ jsxs6("g", { stroke: alpha(shade(color, -0.4), 0.45), strokeWidth: "2.2", fill: "none", strokeLinecap: "round", children: [
+        /* @__PURE__ */ jsx6("path", { d: "M206 96 C210 84 218 74 228 68" }),
+        /* @__PURE__ */ jsx6("path", { d: "M232 90 C234 78 240 68 248 62" }),
+        /* @__PURE__ */ jsx6("path", { d: "M258 88 C258 76 262 66 268 60" }),
+        /* @__PURE__ */ jsx6("path", { d: "M284 90 C284 78 290 68 298 64" }),
+        /* @__PURE__ */ jsx6("path", { d: "M308 98 C310 86 318 76 328 70" })
+      ] }),
+      /* @__PURE__ */ jsx6(Loc, { d: "M174 138 C160 196 158 264 164 322", color, width: 13 }),
+      /* @__PURE__ */ jsx6(Loc, { d: "M338 138 C352 196 354 264 348 322", color, width: 13 }),
+      /* @__PURE__ */ jsx6(Loc, { d: "M156 164 C144 214 142 274 148 330", color, width: 12 }),
+      /* @__PURE__ */ jsx6(Loc, { d: "M356 164 C368 214 370 274 364 330", color, width: 12 }),
+      /* @__PURE__ */ jsx6(HairShine, { id, children: /* @__PURE__ */ jsx6("path", { d: CAP_FADE }) })
+    ] });
+  }
+  if (value === 6) {
+    return /* @__PURE__ */ jsxs6("g", { children: [
+      /* @__PURE__ */ jsx6("path", { d: LONG_TOP_LEFT, fill: color }),
+      /* @__PURE__ */ jsx6("path", { d: LONG_TOP_LEFT, fill: color, transform: "translate(512 0) scale(-1 1)" }),
+      /* @__PURE__ */ jsx6("path", { d: LONG_CURTAIN_LEFT, fill: color }),
+      /* @__PURE__ */ jsx6("path", { d: LONG_CURTAIN_LEFT, fill: color, transform: "translate(512 0) scale(-1 1)" }),
+      /* @__PURE__ */ jsxs6(HairShine, { id, children: [
+        /* @__PURE__ */ jsx6("path", { d: LONG_TOP_LEFT }),
+        /* @__PURE__ */ jsx6("path", { d: LONG_TOP_LEFT, transform: "translate(512 0) scale(-1 1)" }),
+        /* @__PURE__ */ jsx6("path", { d: LONG_CURTAIN_LEFT }),
+        /* @__PURE__ */ jsx6("path", { d: LONG_CURTAIN_LEFT, transform: "translate(512 0) scale(-1 1)" })
+      ] }),
+      /* @__PURE__ */ jsx6(
+        "path",
+        {
+          d: "M160 208 C158 244 158 276 160 302",
+          stroke: alpha(shade(color, -0.25), 0.6),
+          strokeWidth: "2",
+          fill: "none",
+          strokeLinecap: "round"
+        }
+      ),
+      /* @__PURE__ */ jsx6(
+        "path",
+        {
+          d: "M352 208 C354 244 354 276 352 302",
+          stroke: alpha(shade(color, -0.25), 0.6),
+          strokeWidth: "2",
+          fill: "none",
+          strokeLinecap: "round"
+        }
+      )
+    ] });
+  }
+  if (value === 7) {
+    return /* @__PURE__ */ jsxs6("g", { children: [
+      /* @__PURE__ */ jsx6("path", { d: BOB_BANGS, fill: color }),
+      /* @__PURE__ */ jsx6("path", { d: BOB_SIDE_LEFT, fill: color }),
+      /* @__PURE__ */ jsx6("path", { d: BOB_SIDE_LEFT, fill: color, transform: "translate(512 0) scale(-1 1)" }),
+      /* @__PURE__ */ jsx6(HairShine, { id, children: /* @__PURE__ */ jsx6("path", { d: BOB_BANGS }) }),
+      /* @__PURE__ */ jsx6(
+        "path",
+        {
+          d: "M160 210 C158 246 158 280 160 306",
+          stroke: alpha(shade(color, -0.25), 0.55),
+          strokeWidth: "2",
+          fill: "none",
+          strokeLinecap: "round"
+        }
+      ),
+      /* @__PURE__ */ jsx6(
+        "path",
+        {
+          d: "M352 210 C354 246 354 280 352 306",
+          stroke: alpha(shade(color, -0.25), 0.55),
+          strokeWidth: "2",
+          fill: "none",
+          strokeLinecap: "round"
+        }
+      )
+    ] });
+  }
+  if (value === 9) {
+    return /* @__PURE__ */ jsxs6("g", { children: [
+      /* @__PURE__ */ jsx6("path", { d: POMPADOUR, fill: color }),
+      /* @__PURE__ */ jsx6(HairShine, { id, children: /* @__PURE__ */ jsx6("path", { d: POMPADOUR }) }),
+      /* @__PURE__ */ jsx6(
+        "path",
+        {
+          d: "M206 146 C222 114 246 88 278 72",
+          stroke: alpha(shade(color, -0.3), 0.4),
+          strokeWidth: "2.4",
+          fill: "none",
+          strokeLinecap: "round"
+        }
+      )
+    ] });
+  }
+  if (value === 4) {
+    return /* @__PURE__ */ jsxs6("g", { children: [
+      /* @__PURE__ */ jsxs6("defs", { children: [
+        /* @__PURE__ */ jsx6("clipPath", { id: `wave-clip-${id}`, children: /* @__PURE__ */ jsx6("path", { d: CAP_FADE }) }),
+        /* @__PURE__ */ jsxs6(
+          "linearGradient",
+          {
+            id: `fade-${id}`,
+            x1: "0",
+            y1: "114",
+            x2: "0",
+            y2: "186",
+            gradientUnits: "userSpaceOnUse",
+            children: [
+              /* @__PURE__ */ jsx6("stop", { offset: "0", stopColor: skin.base, stopOpacity: "0" }),
+              /* @__PURE__ */ jsx6("stop", { offset: "1", stopColor: skin.base, stopOpacity: ".85" })
+            ]
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsx6("path", { d: CAP_FADE, fill: color }),
+      /* @__PURE__ */ jsxs6("g", { clipPath: `url(#wave-clip-${id})`, children: [
+        /* @__PURE__ */ jsxs6("g", { fill: "none", stroke: dark, strokeWidth: "2.4", strokeLinecap: "round", opacity: ".5", children: [
+          /* @__PURE__ */ jsx6("path", { d: "M196 86 C218 74 242 70 266 72 C290 74 312 82 330 94" }),
+          /* @__PURE__ */ jsx6("path", { d: "M184 104 C210 90 240 84 268 86 C296 88 320 96 340 110" }),
+          /* @__PURE__ */ jsx6("path", { d: "M186 120 C212 108 240 102 266 104 C292 106 314 112 334 122" })
+        ] }),
+        /* @__PURE__ */ jsxs6("g", { fill: "none", stroke: light, strokeWidth: "1.6", strokeLinecap: "round", opacity: ".45", children: [
+          /* @__PURE__ */ jsx6("path", { d: "M198 82 C220 70 244 66 268 68 C292 70 314 78 332 90" }),
+          /* @__PURE__ */ jsx6("path", { d: "M186 100 C212 86 242 80 270 82 C298 84 322 92 342 106" })
+        ] }),
+        /* @__PURE__ */ jsx6("rect", { x: "144", y: "108", width: "30", height: "80", fill: `url(#fade-${id})` }),
+        /* @__PURE__ */ jsx6("rect", { x: "338", y: "108", width: "30", height: "80", fill: `url(#fade-${id})` })
+      ] }),
+      /* @__PURE__ */ jsx6(HairShine, { id, children: /* @__PURE__ */ jsx6("path", { d: CAP_FADE }) })
+    ] });
+  }
+  if (value === 1) {
+    return /* @__PURE__ */ jsxs6("g", { children: [
+      /* @__PURE__ */ jsx6("defs", { children: /* @__PURE__ */ jsx6("pattern", { id: `buzz-${id}`, width: "7", height: "7", patternUnits: "userSpaceOnUse", children: /* @__PURE__ */ jsx6("circle", { cx: "2", cy: "2", r: "0.9", fill: light, opacity: ".55" }) }) }),
+      /* @__PURE__ */ jsx6("path", { d: CAP_BUZZ, fill: color }),
+      /* @__PURE__ */ jsx6("path", { d: CAP_BUZZ, fill: `url(#buzz-${id})`, opacity: ".55" }),
+      /* @__PURE__ */ jsx6(HairShine, { id, children: /* @__PURE__ */ jsx6("path", { d: CAP_BUZZ }) })
+    ] });
+  }
+  return /* @__PURE__ */ jsxs6("g", { children: [
+    /* @__PURE__ */ jsxs6("defs", { children: [
+      /* @__PURE__ */ jsxs6(
+        "linearGradient",
+        {
+          id: `fade-${id}`,
+          x1: "0",
+          y1: "114",
+          x2: "0",
+          y2: "186",
+          gradientUnits: "userSpaceOnUse",
+          children: [
+            /* @__PURE__ */ jsx6("stop", { offset: "0", stopColor: skin.base, stopOpacity: "0" }),
+            /* @__PURE__ */ jsx6("stop", { offset: "1", stopColor: skin.base, stopOpacity: ".85" })
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsx6("clipPath", { id: `fade-clip-${id}`, children: /* @__PURE__ */ jsx6("path", { d: CAP_FADE }) })
+    ] }),
+    /* @__PURE__ */ jsx6("path", { d: CAP_FADE, fill: color }),
+    /* @__PURE__ */ jsxs6("g", { clipPath: `url(#fade-clip-${id})`, children: [
+      /* @__PURE__ */ jsx6("rect", { x: "146", y: "114", width: "28", height: "74", fill: `url(#fade-${id})` }),
+      /* @__PURE__ */ jsx6("rect", { x: "338", y: "114", width: "28", height: "74", fill: `url(#fade-${id})` })
+    ] }),
+    /* @__PURE__ */ jsx6(HairShine, { id, children: /* @__PURE__ */ jsx6("path", { d: CAP_FADE }) }),
+    /* @__PURE__ */ jsx6(
+      "path",
+      {
+        d: "M190 132 C210 126 232 124 256 124 C280 124 302 126 322 132",
+        stroke: alpha(shade(color, -0.35), 0.32),
+        strokeWidth: "2",
+        fill: "none",
+        strokeLinecap: "round"
+      }
+    )
+  ] });
+}
+
+// src/face/features/Head.tsx
+import { jsx as jsx7, jsxs as jsxs7 } from "react/jsx-runtime";
+function Head({ shape, skin, id }) {
+  const path = facePath(shape);
+  return /* @__PURE__ */ jsxs7("g", { children: [
+    /* @__PURE__ */ jsxs7("defs", { children: [
+      /* @__PURE__ */ jsx7("clipPath", { id: `head-${id}`, children: /* @__PURE__ */ jsx7("path", { d: path }) }),
+      /* @__PURE__ */ jsxs7("linearGradient", { id: `side-${id}`, x1: "0", y1: "0", x2: "1", y2: "0", children: [
+        /* @__PURE__ */ jsx7("stop", { offset: "0", stopColor: skin.shadow, stopOpacity: "0" }),
+        /* @__PURE__ */ jsx7("stop", { offset: ".42", stopColor: skin.shadow, stopOpacity: "0" }),
+        /* @__PURE__ */ jsx7("stop", { offset: "1", stopColor: skin.shadow, stopOpacity: ".85" })
+      ] }),
+      /* @__PURE__ */ jsx7("filter", { id: `blur-${id}`, x: "-60%", y: "-60%", width: "220%", height: "220%", children: /* @__PURE__ */ jsx7("feGaussianBlur", { stdDeviation: "6" }) })
+    ] }),
+    /* @__PURE__ */ jsx7(Neck, { skin, id }),
+    /* @__PURE__ */ jsx7(Ears, { skin }),
+    /* @__PURE__ */ jsx7("path", { d: path, fill: skin.base }),
+    /* @__PURE__ */ jsxs7("g", { clipPath: `url(#head-${id})`, children: [
+      /* @__PURE__ */ jsx7("rect", { x: "286", y: "0", width: "230", height: "512", fill: `url(#side-${id})`, opacity: ".22" }),
+      /* @__PURE__ */ jsx7("ellipse", { cx: "224", cy: "168", rx: "62", ry: "40", fill: "#fff", opacity: ".045" }),
+      /* @__PURE__ */ jsx7(
+        "ellipse",
+        {
+          cx: "256",
+          cy: "378",
+          rx: "88",
+          ry: "30",
+          fill: skin.shadow,
+          opacity: ".14",
+          filter: `url(#blur-${id})`
+        }
+      ),
+      /* @__PURE__ */ jsx7(
+        "ellipse",
+        {
+          cx: "196",
+          cy: "278",
+          rx: "34",
+          ry: "22",
+          fill: skin.shadow,
+          opacity: ".07",
+          filter: `url(#blur-${id})`
+        }
+      ),
+      /* @__PURE__ */ jsx7(
+        "ellipse",
+        {
+          cx: "318",
+          cy: "278",
+          rx: "34",
+          ry: "22",
+          fill: skin.shadow,
+          opacity: ".1",
+          filter: `url(#blur-${id})`
+        }
+      )
+    ] })
+  ] });
+}
+function Neck({ skin, id }) {
+  return /* @__PURE__ */ jsxs7("g", { children: [
+    /* @__PURE__ */ jsx7(
+      "path",
+      {
+        d: "M220 300 C220 340 214 366 208 386 L198 512 L314 512 L304 386 C298 366 292 340 292 300 Z",
+        fill: skin.base
+      }
+    ),
+    /* @__PURE__ */ jsx7(
+      "path",
+      {
+        d: "M220 300 C220 340 214 366 208 386 L198 512 L218 512 L226 386 C232 366 238 340 238 300 Z",
+        fill: skin.shadow,
+        opacity: ".22"
+      }
+    ),
+    /* @__PURE__ */ jsx7(
+      "ellipse",
+      {
+        cx: "256",
+        cy: "402",
+        rx: "50",
+        ry: "20",
+        fill: skin.shadow,
+        opacity: ".52",
+        filter: `url(#blur-${id})`
+      }
+    ),
+    /* @__PURE__ */ jsx7("ellipse", { cx: "256", cy: "452", rx: "34", ry: "30", fill: skin.light, opacity: ".06" })
+  ] });
+}
+function Ears({ skin }) {
+  return /* @__PURE__ */ jsxs7("g", { children: [
+    /* @__PURE__ */ jsxs7("g", { children: [
+      /* @__PURE__ */ jsx7(
+        "path",
+        {
+          d: "M164 202 C150 194 136 202 133 220 C130 240 135 262 145 275 C151 283 162 283 165 274 L165 210 C165 206 165 204 164 202 Z",
+          fill: skin.base
+        }
+      ),
+      /* @__PURE__ */ jsx7(
+        "path",
+        {
+          d: "M157 218 C149 214 141 220 141 233 C141 247 145 260 152 268 C155 272 158 270 158 265 L158 224 Z",
+          fill: skin.shadow,
+          opacity: ".62"
+        }
+      ),
+      /* @__PURE__ */ jsx7(
+        "path",
+        {
+          d: "M157 238 C153 240 152 245 154 249",
+          stroke: skin.shadow,
+          strokeWidth: "2",
+          fill: "none",
+          opacity: ".55",
+          strokeLinecap: "round"
+        }
+      ),
+      /* @__PURE__ */ jsx7(
+        "path",
+        {
+          d: "M138 220 C137 234 141 250 148 263",
+          stroke: skin.light,
+          strokeWidth: "2",
+          fill: "none",
+          opacity: ".55",
+          strokeLinecap: "round"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxs7("g", { transform: "translate(512 0) scale(-1 1)", children: [
+      /* @__PURE__ */ jsx7(
+        "path",
+        {
+          d: "M164 202 C150 194 136 202 133 220 C130 240 135 262 145 275 C151 283 162 283 165 274 L165 210 C165 206 165 204 164 202 Z",
+          fill: skin.base
+        }
+      ),
+      /* @__PURE__ */ jsx7(
+        "path",
+        {
+          d: "M157 218 C149 214 141 220 141 233 C141 247 145 260 152 268 C155 272 158 270 158 265 L158 224 Z",
+          fill: skin.shadow,
+          opacity: ".62"
+        }
+      ),
+      /* @__PURE__ */ jsx7(
+        "path",
+        {
+          d: "M157 238 C153 240 152 245 154 249",
+          stroke: skin.shadow,
+          strokeWidth: "2",
+          fill: "none",
+          opacity: ".55",
+          strokeLinecap: "round"
+        }
+      ),
+      /* @__PURE__ */ jsx7(
+        "path",
+        {
+          d: "M138 220 C137 234 141 250 148 263",
+          stroke: skin.light,
+          strokeWidth: "2",
+          fill: "none",
+          opacity: ".55",
+          strokeLinecap: "round"
+        }
+      )
+    ] })
+  ] });
+}
+
+// src/face/features/Headwear.tsx
+import { jsx as jsx8, jsxs as jsxs8 } from "react/jsx-runtime";
+var GOLD2 = "#d6a84a";
+var GOLD_LIGHT2 = "#f0d28a";
+var GOLD_DARK = "#8a6420";
+var CREAM2 = "#f2e8d8";
+var INK = "#231a15";
+function AsoPattern({ fabric, scope, id }) {
+  return /* @__PURE__ */ jsxs8(
+    "pattern",
+    {
+      id: `aso-${scope}-${id}`,
+      width: "18",
+      height: "18",
+      patternUnits: "userSpaceOnUse",
+      patternTransform: "rotate(16)",
+      children: [
+        /* @__PURE__ */ jsx8("rect", { width: "18", height: "18", fill: fabric.value }),
+        /* @__PURE__ */ jsx8("rect", { width: "6", height: "18", fill: shade(fabric.value, 0.28), opacity: ".9" }),
+        /* @__PURE__ */ jsx8("rect", { x: "9", width: "2", height: "18", fill: GOLD_LIGHT2, opacity: ".85" })
+      ]
+    }
+  );
+}
+function fabricFill(fabric, scope, id) {
+  return fabric.pattern ? `url(#aso-${scope}-${id})` : fabric.value;
+}
+function Gele({ fabric, id }) {
+  const fill = fabricFill(fabric, "front", id);
+  const base = fabric.value;
+  const deep = shade(base, -0.4);
+  const light = shade(base, 0.2);
+  const highlight = shade(base, 0.36);
+  const silhouette = "M56 150 C42 90 66 28 110 -12 C150 -48 202 -70 256 -70 C310 -70 362 -48 402 -12 C446 28 470 90 456 150 C452 190 438 220 418 238 C406 248 388 248 376 238 C368 230 362 220 360 210 C356 180 334 148 302 124 C286 112 270 104 256 96 C242 104 226 112 210 124 C178 148 156 180 152 210 C150 220 144 230 136 238 C124 248 106 248 94 238 C74 220 60 190 56 150 Z";
+  const band = "M144 220 C146 184 172 150 204 126 C224 110 242 102 256 102 C270 102 288 110 308 126 C340 150 366 184 368 220 L368 194 C366 160 340 126 308 102 C288 86 270 78 256 78 C242 78 224 86 204 102 C172 126 146 160 144 194 Z";
+  const bandOuter = "M144 220 C146 184 172 150 204 126 C224 110 242 102 256 102 C270 102 288 110 308 126 C340 150 366 184 368 220";
+  const bandInner = "M144 194 C146 160 172 126 204 102 C224 86 242 78 256 78 C270 78 288 86 308 102 C340 126 366 160 368 194";
+  const pleats = Array.from({ length: 13 }, (_, index) => {
+    const t = index / 12;
+    const startX = 158 + t * 196;
+    const startY = 202 - Math.sin(Math.PI * t) * 100;
+    const endX = 64 + t * 384;
+    const endY = 26 - Math.sin(Math.PI * t) * 72;
+    const ctrlX = startX + (endX - startX) * 0.3;
+    const ctrlY = startY - 102;
+    return { startX, startY, endX, endY, ctrlX, ctrlY };
+  });
+  return /* @__PURE__ */ jsxs8("g", { children: [
+    /* @__PURE__ */ jsxs8("defs", { children: [
+      fabric.pattern && /* @__PURE__ */ jsx8(AsoPattern, { fabric, scope: "front", id }),
+      /* @__PURE__ */ jsx8("clipPath", { id: `gele-clip-${id}`, children: /* @__PURE__ */ jsx8("path", { d: silhouette }) }),
+      /* @__PURE__ */ jsxs8("linearGradient", { id: `gele-volume-${id}`, x1: "0", y1: "0", x2: "1", y2: "1", children: [
+        /* @__PURE__ */ jsx8("stop", { offset: "0", stopColor: highlight, stopOpacity: ".4" }),
+        /* @__PURE__ */ jsx8("stop", { offset: ".5", stopColor: highlight, stopOpacity: "0" }),
+        /* @__PURE__ */ jsx8("stop", { offset: "1", stopColor: deep, stopOpacity: ".46" })
+      ] }),
+      /* @__PURE__ */ jsxs8("linearGradient", { id: `gele-band-${id}`, x1: "0", y1: "0", x2: "0", y2: "1", children: [
+        /* @__PURE__ */ jsx8("stop", { offset: "0", stopColor: highlight, stopOpacity: ".6" }),
+        /* @__PURE__ */ jsx8("stop", { offset: ".5", stopColor: base, stopOpacity: "0" }),
+        /* @__PURE__ */ jsx8("stop", { offset: "1", stopColor: deep, stopOpacity: ".5" })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx8("path", { d: silhouette, fill }),
+    /* @__PURE__ */ jsxs8("g", { clipPath: `url(#gele-clip-${id})`, children: [
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M56 150 C42 90 66 28 110 -12 C150 -48 202 -70 256 -70 C212 -58 172 -28 146 16 C120 60 108 108 116 150 C122 188 136 214 146 232 C132 244 112 244 98 232 C76 212 60 186 56 150 Z",
+          fill: deep,
+          opacity: ".36"
+        }
+      ),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M456 150 C470 90 446 28 402 -12 C362 -48 310 -70 256 -70 C306 -52 348 -18 372 28 C396 72 404 118 396 156 C390 196 376 224 366 238 C380 248 398 246 412 232 C434 212 450 186 456 150 Z",
+          fill: light,
+          opacity: ".32"
+        }
+      ),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M110 -12 C140 -50 180 -68 220 -70 C210 -40 196 -14 176 8 C150 0 128 -6 110 -12 Z",
+          fill: light,
+          opacity: ".22"
+        }
+      ),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M220 -70 C240 -74 272 -74 292 -70 C288 -40 278 -14 264 6 C246 4 230 -2 216 0 C212 -24 214 -48 220 -70 Z",
+          fill: highlight,
+          opacity: ".16"
+        }
+      ),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M292 -70 C334 -66 372 -48 402 -12 C384 -2 362 2 340 0 C322 -24 306 -48 292 -70 Z",
+          fill: deep,
+          opacity: ".16"
+        }
+      ),
+      /* @__PURE__ */ jsxs8("g", { fill: "none", stroke: deep, strokeWidth: "1.6", opacity: ".22", strokeLinecap: "round", children: [
+        /* @__PURE__ */ jsx8("path", { d: "M110 -12 C140 -50 180 -68 220 -70" }),
+        /* @__PURE__ */ jsx8("path", { d: "M220 -70 C240 -74 272 -74 292 -70" }),
+        /* @__PURE__ */ jsx8("path", { d: "M292 -70 C334 -66 372 -48 402 -12" })
+      ] }),
+      /* @__PURE__ */ jsxs8("g", { fill: "none", strokeLinecap: "round", children: [
+        pleats.map((pleat, index) => /* @__PURE__ */ jsx8(
+          "path",
+          {
+            d: `M${pleat.startX} ${pleat.startY} Q${pleat.ctrlX} ${pleat.ctrlY} ${pleat.endX} ${pleat.endY}`,
+            stroke: deep,
+            strokeWidth: index % 2 === 0 ? 12 : 8,
+            opacity: ".3"
+          },
+          `dark-${index}`
+        )),
+        pleats.map((pleat, index) => /* @__PURE__ */ jsx8(
+          "path",
+          {
+            d: `M${pleat.startX + 8} ${pleat.startY - 5} Q${pleat.ctrlX + 8} ${pleat.ctrlY - 5} ${pleat.endX + 8} ${pleat.endY - 5}`,
+            stroke: highlight,
+            strokeWidth: index % 2 === 0 ? 5 : 3,
+            opacity: ".42"
+          },
+          `light-${index}`
+        ))
+      ] }),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M104 196 C150 150 214 96 286 54 C332 28 374 12 410 8 C388 34 360 66 330 94 C292 130 250 168 218 198 Z",
+          fill: light,
+          opacity: ".2"
+        }
+      ),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M104 196 C150 150 214 96 286 54 C332 28 374 12 410 8",
+          fill: "none",
+          stroke: highlight,
+          strokeWidth: "2.4",
+          opacity: ".34",
+          strokeLinecap: "round"
+        }
+      ),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M152 224 C178 188 206 160 230 144 C242 136 250 130 256 126 C262 130 270 136 282 144 C306 160 334 188 360 224 L360 210 C356 180 334 148 302 124 C286 112 270 104 256 96 C242 104 226 112 210 124 C178 148 156 180 152 210 Z",
+          fill: deep,
+          opacity: ".26"
+        }
+      ),
+      /* @__PURE__ */ jsx8("path", { d: silhouette, fill: `url(#gele-volume-${id})` })
+    ] }),
+    /* @__PURE__ */ jsx8("path", { d: band, fill }),
+    /* @__PURE__ */ jsx8("path", { d: band, fill: `url(#gele-band-${id})` }),
+    /* @__PURE__ */ jsx8(
+      "path",
+      {
+        d: bandOuter,
+        fill: "none",
+        stroke: deep,
+        strokeWidth: "2.6",
+        opacity: ".55",
+        strokeLinecap: "round"
+      }
+    ),
+    /* @__PURE__ */ jsx8(
+      "path",
+      {
+        d: bandInner,
+        fill: "none",
+        stroke: highlight,
+        strokeWidth: "2",
+        opacity: ".55",
+        strokeLinecap: "round"
+      }
+    ),
+    /* @__PURE__ */ jsx8(
+      "path",
+      {
+        d: "M150 200 C176 168 202 142 228 124 C242 114 250 108 256 104 C262 108 270 114 284 124 C310 142 336 168 362 200",
+        fill: "none",
+        stroke: highlight,
+        strokeWidth: "1.4",
+        opacity: ".28",
+        strokeLinecap: "round"
+      }
+    ),
+    /* @__PURE__ */ jsx8("path", { d: silhouette, fill: "none", stroke: deep, strokeWidth: "1.5", opacity: ".38" })
+  ] });
+}
+function Filah({ id }) {
+  const navy = "#2b4268";
+  const navyDark = "#1b2e4c";
+  const navyLight = "#41618f";
+  const navyDeep = "#13233b";
+  const silhouette = "M140 158 C132 130 138 102 156 82 C174 62 198 48 222 40 C236 22 258 14 280 22 C308 34 338 58 358 90 C374 116 382 140 380 158 C338 168 298 172 258 172 C218 172 178 168 140 158 Z";
+  return /* @__PURE__ */ jsxs8("g", { children: [
+    /* @__PURE__ */ jsxs8("defs", { children: [
+      /* @__PURE__ */ jsx8("clipPath", { id: `filah-clip-${id}`, children: /* @__PURE__ */ jsx8("path", { d: silhouette }) }),
+      /* @__PURE__ */ jsxs8(
+        "pattern",
+        {
+          id: `filah-weave-${id}`,
+          width: "28",
+          height: "28",
+          patternUnits: "userSpaceOnUse",
+          patternTransform: "rotate(45)",
+          children: [
+            /* @__PURE__ */ jsx8("rect", { width: "28", height: "28", fill: navy }),
+            /* @__PURE__ */ jsx8("path", { d: "M0 14 H28 M14 0 V28", stroke: GOLD2, strokeWidth: "1.6", opacity: ".75" }),
+            /* @__PURE__ */ jsx8("circle", { cx: "14", cy: "14", r: "2.1", fill: GOLD_LIGHT2, opacity: ".7" }),
+            /* @__PURE__ */ jsx8("circle", { cx: "0", cy: "0", r: "1.5", fill: GOLD_LIGHT2, opacity: ".45" }),
+            /* @__PURE__ */ jsx8("circle", { cx: "28", cy: "28", r: "1.5", fill: GOLD_LIGHT2, opacity: ".45" })
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsxs8("linearGradient", { id: `filah-shade-${id}`, x1: "0", y1: "0", x2: "1", y2: "1", children: [
+        /* @__PURE__ */ jsx8("stop", { offset: "0", stopColor: navyLight, stopOpacity: ".38" }),
+        /* @__PURE__ */ jsx8("stop", { offset: ".55", stopColor: navy, stopOpacity: "0" }),
+        /* @__PURE__ */ jsx8("stop", { offset: "1", stopColor: navyDeep, stopOpacity: ".45" })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx8("path", { d: silhouette, fill: navy }),
+    /* @__PURE__ */ jsxs8("g", { clipPath: `url(#filah-clip-${id})`, children: [
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M146 160 C206 140 266 116 326 86 C346 76 364 64 380 56 L394 180 L146 180 Z",
+          fill: `url(#filah-weave-${id})`
+        }
+      ),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M140 158 C132 130 138 102 156 82 C174 62 198 48 222 40 C236 22 258 14 280 22 C308 34 338 58 358 90 C326 84 294 80 264 86 C222 94 182 118 148 160 Z",
+          fill: navyLight,
+          opacity: ".72"
+        }
+      ),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M142 160 C188 138 234 114 276 86 C308 64 340 48 368 40 C352 64 328 88 302 110 C264 142 222 166 188 174 Z",
+          fill: navyDark,
+          opacity: ".9"
+        }
+      ),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M142 160 C188 138 234 114 276 86 C308 64 340 48 368 40",
+          fill: "none",
+          stroke: GOLD_LIGHT2,
+          strokeWidth: "1.6",
+          opacity: ".6"
+        }
+      ),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M154 168 C198 148 244 122 286 94 C316 74 344 58 370 50",
+          fill: "none",
+          stroke: navyDeep,
+          strokeWidth: "1.3",
+          opacity: ".45"
+        }
+      ),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M222 40 C236 22 258 14 280 22 C298 30 316 42 330 56 C306 50 282 50 260 54 C244 56 230 50 222 40 Z",
+          fill: navyLight,
+          opacity: ".6"
+        }
+      ),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M222 40 C236 22 258 14 280 22",
+          fill: "none",
+          stroke: GOLD2,
+          strokeWidth: "1.2",
+          opacity: ".55"
+        }
+      ),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M140 158 C132 130 138 102 156 82 C174 62 198 48 222 40 C236 22 258 14 280 22 C308 34 338 58 358 90 C326 84 294 80 264 86 C222 94 182 118 148 160 Z",
+          fill: `url(#filah-weave-${id})`,
+          opacity: ".18"
+        }
+      ),
+      /* @__PURE__ */ jsx8("path", { d: silhouette, fill: `url(#filah-shade-${id})` })
+    ] }),
+    /* @__PURE__ */ jsx8(
+      "path",
+      {
+        d: "M140 158 C178 168 218 172 258 172 C298 172 338 168 380 158 L380 144 C338 154 298 158 258 158 C218 158 178 154 140 144 Z",
+        fill: GOLD2
+      }
+    ),
+    /* @__PURE__ */ jsx8(
+      "path",
+      {
+        d: "M140 158 C178 168 218 172 258 172 C298 172 338 168 380 158",
+        fill: "none",
+        stroke: GOLD_DARK,
+        strokeWidth: "1.8",
+        opacity: ".65"
+      }
+    ),
+    /* @__PURE__ */ jsx8(
+      "path",
+      {
+        d: "M148 150 C184 160 222 164 258 164 C294 164 332 160 372 150",
+        fill: "none",
+        stroke: GOLD_LIGHT2,
+        strokeWidth: "1.5",
+        opacity: ".6"
+      }
+    ),
+    /* @__PURE__ */ jsx8(
+      "path",
+      {
+        d: "M140 144 C178 154 218 158 258 158 C298 158 338 154 380 144",
+        fill: "none",
+        stroke: GOLD_DARK,
+        strokeWidth: "1.2",
+        opacity: ".45"
+      }
+    ),
+    /* @__PURE__ */ jsxs8("g", { fill: GOLD_DARK, opacity: ".6", children: [
+      /* @__PURE__ */ jsx8("path", { d: "M194 154 L200 148 L206 154 L200 160 Z" }),
+      /* @__PURE__ */ jsx8("path", { d: "M250 156 L256 150 L262 156 L256 162 Z" }),
+      /* @__PURE__ */ jsx8("path", { d: "M308 154 L314 148 L320 154 L314 160 Z" })
+    ] }),
+    /* @__PURE__ */ jsx8("path", { d: silhouette, fill: "none", stroke: navyDeep, strokeWidth: "1.3", opacity: ".55" })
+  ] });
+}
+function OkpuAgu({ id }) {
+  const red = "#c93528";
+  const redDark = "#a02a20";
+  const redLight = "#d94838";
+  return /* @__PURE__ */ jsxs8("g", { children: [
+    /* @__PURE__ */ jsxs8("defs", { children: [
+      /* @__PURE__ */ jsx8("clipPath", { id: `okpu-clip-${id}`, children: /* @__PURE__ */ jsx8("path", { d: "M256 46 C316 46 358 72 364 118 C366 128 364 138 360 148 L152 148 C148 138 146 128 148 118 C154 72 196 46 256 46 Z" }) }),
+      /* @__PURE__ */ jsxs8(
+        "pattern",
+        {
+          id: `okpu-stripes-${id}`,
+          width: "512",
+          height: "18",
+          patternUnits: "userSpaceOnUse",
+          children: [
+            /* @__PURE__ */ jsx8("rect", { width: "512", height: "18", fill: red }),
+            /* @__PURE__ */ jsx8("rect", { width: "512", height: "4", y: "0", fill: INK }),
+            /* @__PURE__ */ jsx8("rect", { width: "512", height: "2.4", y: "5", fill: CREAM2, opacity: ".9" }),
+            /* @__PURE__ */ jsx8("rect", { width: "512", height: "2.4", y: "8.5", fill: CREAM2, opacity: ".9" }),
+            /* @__PURE__ */ jsx8("rect", { width: "512", height: "4", y: "14", fill: INK })
+          ]
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsx8(
+      "path",
+      {
+        d: "M256 46 C316 46 358 72 364 118 C366 128 364 138 360 148 L152 148 C148 138 146 128 148 118 C154 72 196 46 256 46 Z",
+        fill: red
+      }
+    ),
+    /* @__PURE__ */ jsxs8("g", { clipPath: `url(#okpu-clip-${id})`, children: [
+      /* @__PURE__ */ jsx8("rect", { x: "140", y: "40", width: "240", height: "120", fill: `url(#okpu-stripes-${id})` }),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M256 46 C306 46 344 62 358 88 C334 72 298 62 256 62 C214 62 178 72 154 88 C168 62 206 46 256 46 Z",
+          fill: redLight,
+          opacity: ".4"
+        }
+      ),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M148 118 C154 72 196 46 256 46 C210 50 180 72 170 102 C166 114 162 128 160 148 L152 148 C148 138 146 128 148 118 Z",
+          fill: INK,
+          opacity: ".12"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsx8(
+      "path",
+      {
+        d: "M256 46 C316 46 358 72 364 118 C366 128 364 138 360 148 L152 148 C148 138 146 128 148 118 C154 72 196 46 256 46 Z",
+        fill: "none",
+        stroke: redDark,
+        strokeWidth: "1.2",
+        opacity: ".5"
+      }
+    ),
+    /* @__PURE__ */ jsxs8("g", { transform: "translate(340 38) rotate(15)", children: [
+      /* @__PURE__ */ jsx8("path", { d: "M0 80 C6 50 14 24 30 0 C36 22 30 48 20 66 C14 76 6 82 0 80 Z", fill: CREAM2 }),
+      /* @__PURE__ */ jsx8("path", { d: "M12 64 C18 42 24 22 30 4 C26 28 20 50 16 68 Z", fill: red, opacity: ".85" }),
+      /* @__PURE__ */ jsx8("path", { d: "M2 78 C8 48 18 22 30 2", stroke: INK, strokeWidth: "1.4", fill: "none" }),
+      /* @__PURE__ */ jsxs8("g", { stroke: INK, strokeWidth: ".8", fill: "none", opacity: ".4", children: [
+        /* @__PURE__ */ jsx8("path", { d: "M8 68 C14 54 20 38 28 20" }),
+        /* @__PURE__ */ jsx8("path", { d: "M4 74 C12 56 20 40 26 26" })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx8(
+      "path",
+      {
+        d: "M346 114 C352 108 360 108 366 114 C360 120 354 126 350 132 C348 126 346 120 346 114 Z",
+        fill: "#e7cfa6",
+        stroke: "#6b4426",
+        strokeWidth: ".8"
+      }
+    )
+  ] });
+}
+function Kufi({ id }) {
+  const capColor = "#e9d9b8";
+  const capLight = "#f6ecd8";
+  const capShadow = "#d4c4a0";
+  const bandColor = "#6b3a1e";
+  const bandLight = "#8a5430";
+  const accentCoral = "#d07050";
+  return /* @__PURE__ */ jsxs8("g", { children: [
+    /* @__PURE__ */ jsxs8("defs", { children: [
+      /* @__PURE__ */ jsx8("clipPath", { id: `kufi-clip-${id}`, children: /* @__PURE__ */ jsx8("path", { d: "M256 42 C318 42 360 58 366 96 C368 108 368 120 366 132 C364 140 360 146 356 150 L156 150 C152 146 148 140 146 132 C144 120 144 108 146 96 C152 58 194 42 256 42 Z" }) }),
+      /* @__PURE__ */ jsxs8("pattern", { id: `kufi-geo-${id}`, width: "24", height: "24", patternUnits: "userSpaceOnUse", children: [
+        /* @__PURE__ */ jsx8("rect", { width: "24", height: "24", fill: bandColor }),
+        /* @__PURE__ */ jsx8("path", { d: "M12 2 L22 12 L12 22 L2 12 Z", fill: "none", stroke: capColor, strokeWidth: "1.6", opacity: ".8" }),
+        /* @__PURE__ */ jsx8("path", { d: "M12 6 L18 12 L12 18 L6 12 Z", fill: "none", stroke: capColor, strokeWidth: "1", opacity: ".5" }),
+        /* @__PURE__ */ jsx8("circle", { cx: "12", cy: "12", r: "2", fill: accentCoral, opacity: ".85" }),
+        /* @__PURE__ */ jsx8("circle", { cx: "0", cy: "0", r: "1.2", fill: accentCoral, opacity: ".6" }),
+        /* @__PURE__ */ jsx8("circle", { cx: "24", cy: "0", r: "1.2", fill: accentCoral, opacity: ".6" }),
+        /* @__PURE__ */ jsx8("circle", { cx: "0", cy: "24", r: "1.2", fill: accentCoral, opacity: ".6" }),
+        /* @__PURE__ */ jsx8("circle", { cx: "24", cy: "24", r: "1.2", fill: accentCoral, opacity: ".6" })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx8(
+      "path",
+      {
+        d: "M256 42 C318 42 360 58 366 96 C368 108 368 120 366 132 C364 140 360 146 356 150 L156 150 C152 146 148 140 146 132 C144 120 144 108 146 96 C152 58 194 42 256 42 Z",
+        fill: capColor
+      }
+    ),
+    /* @__PURE__ */ jsxs8("g", { clipPath: `url(#kufi-clip-${id})`, children: [
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M256 42 C306 42 344 52 358 72 C334 58 298 50 256 50 C214 50 178 58 154 72 C168 52 206 42 256 42 Z",
+          fill: capLight
+        }
+      ),
+      /* @__PURE__ */ jsxs8("g", { stroke: capShadow, strokeWidth: ".8", fill: "none", opacity: ".3", children: [
+        /* @__PURE__ */ jsx8("path", { d: "M190 52 L188 98" }),
+        /* @__PURE__ */ jsx8("path", { d: "M210 48 L208 100" }),
+        /* @__PURE__ */ jsx8("path", { d: "M230 46 L228 102" }),
+        /* @__PURE__ */ jsx8("path", { d: "M250 44 L248 104" }),
+        /* @__PURE__ */ jsx8("path", { d: "M270 44 L268 104" }),
+        /* @__PURE__ */ jsx8("path", { d: "M290 46 L288 102" }),
+        /* @__PURE__ */ jsx8("path", { d: "M310 48 L308 100" }),
+        /* @__PURE__ */ jsx8("path", { d: "M330 52 L328 98" })
+      ] }),
+      /* @__PURE__ */ jsx8("rect", { x: "140", y: "104", width: "232", height: "50", fill: `url(#kufi-geo-${id})` }),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M148 104 C192 114 226 118 256 118 C286 118 320 114 364 104",
+          stroke: bandLight,
+          strokeWidth: "2",
+          fill: "none",
+          opacity: ".7"
+        }
+      ),
+      /* @__PURE__ */ jsx8(
+        "path",
+        {
+          d: "M152 108 C194 118 228 122 256 122 C284 122 318 118 360 108",
+          stroke: capColor,
+          strokeWidth: "1",
+          fill: "none",
+          opacity: ".5"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsx8(
+      "path",
+      {
+        d: "M256 42 C318 42 360 58 366 96 C368 108 368 120 366 132 C364 140 360 146 356 150 L156 150 C152 146 148 140 146 132 C144 120 144 108 146 96 C152 58 194 42 256 42 Z",
+        fill: "none",
+        stroke: bandColor,
+        strokeWidth: "1.2",
+        opacity: ".4"
+      }
+    ),
+    /* @__PURE__ */ jsx8(
+      "path",
+      {
+        d: "M256 44 C296 44 330 52 350 66",
+        stroke: capShadow,
+        strokeWidth: "1.4",
+        fill: "none",
+        opacity: ".5"
+      }
+    ),
+    /* @__PURE__ */ jsx8("circle", { cx: "256", cy: "44", r: "4.5", fill: bandColor }),
+    /* @__PURE__ */ jsx8("circle", { cx: "255", cy: "43", r: "1.6", fill: capColor, opacity: ".6" })
+  ] });
+}
+function HeadwearFront({ value, fabric, id }) {
+  if (value === 1) return /* @__PURE__ */ jsx8(Gele, { fabric, id });
+  if (value === 2) return /* @__PURE__ */ jsx8(Filah, { id });
+  if (value === 3) return /* @__PURE__ */ jsx8(OkpuAgu, { id });
+  if (value === 4) return /* @__PURE__ */ jsx8(Kufi, { id });
+  return null;
+}
+
+// src/face/features/Marks.tsx
+import { jsx as jsx9, jsxs as jsxs9 } from "react/jsx-runtime";
+function Marks({ value, skin }) {
+  if (value === 0) return null;
+  const ink = alpha(shade(skin.shadow, -0.3), 0.62);
+  const lift = alpha(skin.light, 0.45);
+  if (value === 1) {
+    return /* @__PURE__ */ jsx9("g", { fill: "none", strokeLinecap: "round", children: [0, 1, 2].map((i) => /* @__PURE__ */ jsxs9("g", { children: [
+      /* @__PURE__ */ jsx9(
+        "path",
+        {
+          d: `M186 ${282 + i * 10} C198 ${278 + i * 10} 210 ${278 + i * 10} 222 ${282 + i * 10}`,
+          stroke: ink,
+          strokeWidth: "2.4"
+        }
+      ),
+      /* @__PURE__ */ jsx9(
+        "path",
+        {
+          d: `M186 ${280 + i * 10} C198 ${276 + i * 10} 210 ${276 + i * 10} 222 ${280 + i * 10}`,
+          stroke: lift,
+          strokeWidth: ".9"
+        }
+      ),
+      /* @__PURE__ */ jsx9(
+        "path",
+        {
+          d: `M290 ${282 + i * 10} C302 ${278 + i * 10} 314 ${278 + i * 10} 326 ${282 + i * 10}`,
+          stroke: ink,
+          strokeWidth: "2.4"
+        }
+      ),
+      /* @__PURE__ */ jsx9(
+        "path",
+        {
+          d: `M290 ${280 + i * 10} C302 ${276 + i * 10} 314 ${276 + i * 10} 326 ${280 + i * 10}`,
+          stroke: lift,
+          strokeWidth: ".9"
+        }
+      )
+    ] }, i)) });
+  }
+  if (value === 2) {
+    return /* @__PURE__ */ jsx9("g", { fill: "none", strokeLinecap: "round", children: [0, 1, 2].map((i) => /* @__PURE__ */ jsxs9("g", { children: [
+      /* @__PURE__ */ jsx9(
+        "path",
+        {
+          d: `M196 ${272 + i * 9} C186 ${306 + i * 8} 186 ${340 + i * 6} 196 ${364 + i * 4}`,
+          stroke: ink,
+          strokeWidth: "2.6"
+        }
+      ),
+      /* @__PURE__ */ jsx9(
+        "path",
+        {
+          d: `M194 ${272 + i * 9} C184 ${306 + i * 8} 184 ${340 + i * 6} 194 ${364 + i * 4}`,
+          stroke: lift,
+          strokeWidth: ".9"
+        }
+      ),
+      /* @__PURE__ */ jsx9(
+        "path",
+        {
+          d: `M316 ${272 + i * 9} C326 ${306 + i * 8} 326 ${340 + i * 6} 316 ${364 + i * 4}`,
+          stroke: ink,
+          strokeWidth: "2.6"
+        }
+      ),
+      /* @__PURE__ */ jsx9(
+        "path",
+        {
+          d: `M318 ${272 + i * 9} C328 ${306 + i * 8} 328 ${340 + i * 6} 318 ${364 + i * 4}`,
+          stroke: lift,
+          strokeWidth: ".9"
+        }
+      )
+    ] }, i)) });
+  }
+  return /* @__PURE__ */ jsxs9("g", { fill: "none", strokeLinecap: "round", children: [
+    [0, 1, 2].map((i) => /* @__PURE__ */ jsxs9("g", { children: [
+      /* @__PURE__ */ jsx9("path", { d: `M198 ${274 + i * 9} L198 ${322 + i * 7}`, stroke: ink, strokeWidth: "2.4" }),
+      /* @__PURE__ */ jsx9("path", { d: `M196 ${274 + i * 9} L196 ${322 + i * 7}`, stroke: lift, strokeWidth: ".9" }),
+      /* @__PURE__ */ jsx9("path", { d: `M314 ${274 + i * 9} L314 ${322 + i * 7}`, stroke: ink, strokeWidth: "2.4" }),
+      /* @__PURE__ */ jsx9("path", { d: `M316 ${274 + i * 9} L316 ${322 + i * 7}`, stroke: lift, strokeWidth: ".9" })
+    ] }, i)),
+    [0, 1, 2].map((i) => /* @__PURE__ */ jsx9(
+      "path",
+      {
+        d: `M234 ${170 + i * 8} L278 ${170 + i * 8}`,
+        stroke: ink,
+        strokeWidth: "2"
+      },
+      `f${i}`
+    ))
+  ] });
+}
+
+// src/face/features/Mouth.tsx
+import { jsx as jsx10, jsxs as jsxs10 } from "react/jsx-runtime";
+function Mouth({ value, skin, id }) {
+  const lip = skin.lip;
+  const lipLight = mix(lip, skin.light, 0.22);
+  const lipDark = shade(lip, -0.32);
+  const lipShadow = alpha(lipDark, 0.55);
+  const shadow = /* @__PURE__ */ jsx10(
+    "ellipse",
+    {
+      cx: "256",
+      cy: "371",
+      rx: "25",
+      ry: "7",
+      fill: skin.shadow,
+      opacity: ".22",
+      filter: `url(#mouth-blur-${id})`
+    }
+  );
+  const defs = /* @__PURE__ */ jsx10("defs", { children: /* @__PURE__ */ jsx10("filter", { id: `mouth-blur-${id}`, x: "-60%", y: "-60%", width: "220%", height: "220%", children: /* @__PURE__ */ jsx10("feGaussianBlur", { stdDeviation: "3" }) }) });
+  if (value === 1) {
+    return /* @__PURE__ */ jsxs10("g", { children: [
+      defs,
+      shadow,
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M218 342 C230 337 242 337 250 342 C252 344 260 344 262 342 C270 337 282 337 294 342 C282 345 268 346 256 346 C244 346 230 345 218 342 Z",
+          fill: lip
+        }
+      ),
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M221 344 C234 349 245 351 256 351 C267 351 278 349 291 344 C288 356 275 362 256 362 C237 362 224 356 221 344 Z",
+          fill: lipLight
+        }
+      ),
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M218 342 C236 347 276 347 294 342",
+          stroke: lipDark,
+          strokeWidth: "2",
+          fill: "none",
+          strokeLinecap: "round"
+        }
+      ),
+      /* @__PURE__ */ jsx10("ellipse", { cx: "256", cy: "356", rx: "15", ry: "3", fill: "#fff", opacity: ".08" }),
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M216 339 C214 343 214 347 217 350",
+          stroke: lipShadow,
+          strokeWidth: "1.6",
+          fill: "none",
+          strokeLinecap: "round"
+        }
+      ),
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M296 339 C298 343 298 347 295 350",
+          stroke: lipShadow,
+          strokeWidth: "1.6",
+          fill: "none",
+          strokeLinecap: "round"
+        }
+      )
+    ] });
+  }
+  if (value === 2) {
+    return /* @__PURE__ */ jsxs10("g", { children: [
+      defs,
+      shadow,
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M222 346 C234 340 246 338 254 342 C256 343 262 343 264 341 C272 336 284 338 292 342 C280 345 268 346 256 346 C244 346 232 346 222 346 Z",
+          fill: lip
+        }
+      ),
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M225 348 C238 352 247 353 256 353 C266 353 276 352 288 348 C286 358 274 363 256 363 C240 363 228 358 225 348 Z",
+          fill: lipLight
+        }
+      ),
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M222 346 C238 349 274 348 292 340",
+          stroke: lipDark,
+          strokeWidth: "2",
+          fill: "none",
+          strokeLinecap: "round"
+        }
+      ),
+      /* @__PURE__ */ jsx10("ellipse", { cx: "256", cy: "357", rx: "14", ry: "3", fill: "#fff", opacity: ".08" })
+    ] });
+  }
+  if (value === 3) {
+    return /* @__PURE__ */ jsxs10("g", { children: [
+      defs,
+      shadow,
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M220 342 C232 336 244 334 256 338 C268 334 280 336 292 342 C286 360 274 368 256 368 C238 368 226 360 220 342 Z",
+          fill: lipDark
+        }
+      ),
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M228 342 C240 338 272 338 284 342 C278 349 270 352 256 352 C242 352 234 349 228 342 Z",
+          fill: "#f7f1e6"
+        }
+      ),
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M228 342 C240 338 272 338 284 342 C282 344 280 345 278 346 C266 342 246 342 234 346 C232 345 230 344 228 342 Z",
+          fill: lipShadow,
+          opacity: ".5"
+        }
+      ),
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M220 342 C232 336 244 334 256 338 C268 334 280 336 292 342",
+          stroke: lipDark,
+          strokeWidth: "2.2",
+          fill: "none",
+          strokeLinecap: "round"
+        }
+      ),
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M226 355 C238 360 274 360 286 355",
+          stroke: alpha(lipLight, 0.5),
+          strokeWidth: "2",
+          fill: "none",
+          strokeLinecap: "round"
+        }
+      )
+    ] });
+  }
+  if (value === 4) {
+    return /* @__PURE__ */ jsxs10("g", { children: [
+      defs,
+      shadow,
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M220 348 C232 343 244 342 252 345 C254 347 260 347 262 345 C270 342 282 343 292 348 C280 350 268 351 256 351 C244 351 232 350 220 348 Z",
+          fill: lip
+        }
+      ),
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M223 350 C236 354 246 355 256 355 C266 355 276 354 289 350 C286 360 274 365 256 365 C238 365 226 360 223 350 Z",
+          fill: lipLight
+        }
+      ),
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M219 351 C232 346 244 345 256 347 C268 345 280 346 293 351",
+          stroke: lipDark,
+          strokeWidth: "2",
+          fill: "none",
+          strokeLinecap: "round"
+        }
+      ),
+      /* @__PURE__ */ jsx10("ellipse", { cx: "256", cy: "359", rx: "14", ry: "3", fill: "#fff", opacity: ".07" })
+    ] });
+  }
+  if (value === 5) {
+    return /* @__PURE__ */ jsxs10("g", { children: [
+      defs,
+      shadow,
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M218 344 C230 337 243 335 251 341 C253 343 259 343 261 341 C269 335 282 337 294 344 C281 347 268 348 256 348 C244 348 231 347 218 344 Z",
+          fill: lip
+        }
+      ),
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M220 346 C234 351 245 353 256 353 C267 353 278 351 290 346 C289 359 275 367 256 367 C237 367 223 359 220 346 Z",
+          fill: lipLight
+        }
+      ),
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M218 344 C236 349 276 349 294 344",
+          stroke: lipDark,
+          strokeWidth: "2",
+          fill: "none",
+          strokeLinecap: "round"
+        }
+      ),
+      /* @__PURE__ */ jsx10("ellipse", { cx: "256", cy: "358", rx: "17", ry: "4", fill: "#fff", opacity: ".1" }),
+      /* @__PURE__ */ jsx10(
+        "path",
+        {
+          d: "M221 349 C234 354 246 356 256 356",
+          stroke: alpha(lipDark, 0.22),
+          strokeWidth: "1.6",
+          fill: "none",
+          strokeLinecap: "round"
+        }
+      )
+    ] });
+  }
+  return /* @__PURE__ */ jsxs10("g", { children: [
+    defs,
+    shadow,
+    /* @__PURE__ */ jsx10(
+      "path",
+      {
+        d: "M220 345 C230 338 242 336 250 341 C252 343 260 343 262 341 C270 336 282 338 292 345 C280 347 268 348 256 348 C244 348 232 347 220 345 Z",
+        fill: lip
+      }
+    ),
+    /* @__PURE__ */ jsx10(
+      "path",
+      {
+        d: "M223 347 C236 351 246 352 256 352 C266 352 276 351 289 347 C286 357 274 363 256 363 C238 363 226 357 223 347 Z",
+        fill: lipLight
+      }
+    ),
+    /* @__PURE__ */ jsx10(
+      "path",
+      {
+        d: "M220 345 C236 349 276 349 292 345",
+        stroke: lipDark,
+        strokeWidth: "2",
+        fill: "none",
+        strokeLinecap: "round"
+      }
+    ),
+    /* @__PURE__ */ jsx10("ellipse", { cx: "256", cy: "356", rx: "14", ry: "3", fill: "#fff", opacity: ".08" })
+  ] });
+}
+
+// src/face/features/Necklace.tsx
+import { jsx as jsx11, jsxs as jsxs11 } from "react/jsx-runtime";
+var CORAL2 = "#e2725b";
+var CORAL_DARK2 = "#b84f3f";
+var CORAL_LIGHT2 = "#f5a48b";
+var GOLD3 = "#d6a84a";
+var GOLD_LIGHT3 = "#f0d28a";
+var CREAM3 = "#f2e8d8";
+var SHELL_DARK2 = "#a8865f";
+function arcPoints(y0, sag, count) {
+  return Array.from({ length: count }, (_, i) => {
+    const t = i / (count - 1);
+    return {
+      x: 212 + t * 88,
+      y: y0 + Math.sin(Math.PI * t) * sag
+    };
+  });
+}
+function Necklace({ value }) {
+  if (value === 0) return null;
+  if (value === 1) {
+    return /* @__PURE__ */ jsxs11("g", { children: [
+      /* @__PURE__ */ jsx11("path", { d: "M212 412 Q256 448 300 412", stroke: CORAL_DARK2, strokeWidth: "1.6", fill: "none" }),
+      /* @__PURE__ */ jsx11("path", { d: "M214 424 Q256 464 298 424", stroke: CORAL_DARK2, strokeWidth: "1.4", fill: "none" }),
+      [
+        ...arcPoints(412, 28, 9),
+        ...arcPoints(424, 32, 9)
+      ].map((p, i) => /* @__PURE__ */ jsxs11("g", { children: [
+        /* @__PURE__ */ jsx11("circle", { cx: p.x, cy: p.y, r: "5.1", fill: CORAL2, stroke: CORAL_DARK2, strokeWidth: "1" }),
+        /* @__PURE__ */ jsx11("circle", { cx: p.x - 1.4, cy: p.y - 1.6, r: "1.5", fill: CORAL_LIGHT2, opacity: ".85" })
+      ] }, i)),
+      /* @__PURE__ */ jsxs11("g", { children: [
+        /* @__PURE__ */ jsx11("circle", { cx: "256", cy: "450", r: "8", fill: CORAL2, stroke: CORAL_DARK2, strokeWidth: "1.2" }),
+        /* @__PURE__ */ jsx11("circle", { cx: "253", cy: "447", r: "2.2", fill: CORAL_LIGHT2, opacity: ".85" }),
+        /* @__PURE__ */ jsx11("path", { d: "M250 438 L256 433 L262 438", stroke: GOLD3, strokeWidth: "2", fill: "none" })
+      ] })
+    ] });
+  }
+  if (value === 2) {
+    return /* @__PURE__ */ jsxs11("g", { children: [
+      /* @__PURE__ */ jsx11("path", { d: "M214 414 Q256 448 298 414", stroke: GOLD3, strokeWidth: "2.4", fill: "none" }),
+      /* @__PURE__ */ jsx11("path", { d: "M214 412 Q256 445 298 412", stroke: GOLD_LIGHT3, strokeWidth: ".9", fill: "none", opacity: ".8" }),
+      arcPoints(414, 34, 9).map((p, i) => /* @__PURE__ */ jsx11("circle", { cx: p.x, cy: p.y, r: "2.2", fill: GOLD3, stroke: "#8a6420", strokeWidth: ".7" }, i)),
+      /* @__PURE__ */ jsxs11("g", { transform: "translate(256 446)", children: [
+        /* @__PURE__ */ jsx11("path", { d: "M0 -8 L7 0 L0 9 L-7 0 Z", fill: GOLD3, stroke: "#8a6420", strokeWidth: "1" }),
+        /* @__PURE__ */ jsx11("path", { d: "M0 -4 L3 0 L0 4 L-3 0 Z", fill: GOLD_LIGHT3, opacity: ".8" })
+      ] })
+    ] });
+  }
+  if (value === 3) {
+    const shells = arcPoints(414, 32, 5);
+    return /* @__PURE__ */ jsxs11("g", { children: [
+      /* @__PURE__ */ jsx11("path", { d: "M212 414 Q256 448 300 414", stroke: SHELL_DARK2, strokeWidth: "1.6", fill: "none" }),
+      shells.map((p, i) => /* @__PURE__ */ jsxs11("g", { transform: `translate(${p.x} ${p.y})`, children: [
+        /* @__PURE__ */ jsx11("ellipse", { cx: "0", cy: "0", rx: "5", ry: "7", fill: CREAM3, stroke: SHELL_DARK2, strokeWidth: "1" }),
+        /* @__PURE__ */ jsx11("path", { d: "M0 -4 C-1.6 -1 -1.6 1 0 4 C1.6 1 1.6 -1 0 -4 Z", fill: SHELL_DARK2, opacity: ".55" }),
+        /* @__PURE__ */ jsx11("path", { d: "M-2.4 -2.4 C-1.6 -1.4 -1.6 -0.6 -1.2 0", stroke: CREAM3, strokeWidth: ".8", fill: "none", opacity: ".9" })
+      ] }, i)),
+      /* @__PURE__ */ jsx11("circle", { cx: "256", cy: "448", r: "4", fill: GOLD3, stroke: "#8a6420", strokeWidth: ".8" })
+    ] });
+  }
+  return /* @__PURE__ */ jsx11("g", { children: [412, 424, 436].map((y, row) => {
+    const inset = row * 4;
+    const count = 11 - row;
+    return Array.from({ length: count }, (_, i) => {
+      const x = 208 + inset + i * (96 - inset * 2) / (count - 1);
+      const yy = y + Math.sin(Math.PI * i / (count - 1)) * (10 - row * 2);
+      const fill = i % 3 === 0 ? GOLD3 : i % 3 === 1 ? CORAL2 : CREAM3;
+      return /* @__PURE__ */ jsxs11("g", { children: [
+        /* @__PURE__ */ jsx11("circle", { cx: x, cy: yy, r: "3.3", fill, stroke: row === 2 ? GOLD3 : CORAL_DARK2, strokeWidth: ".8" }),
+        /* @__PURE__ */ jsx11("circle", { cx: x - 1, cy: yy - 1, r: ".9", fill: "#ffffff", opacity: ".45" })
+      ] }, `${row}-${i}`);
+    });
+  }) });
+}
+
+// src/face/features/Nose.tsx
+import { jsx as jsx12, jsxs as jsxs12 } from "react/jsx-runtime";
+function Nose({ value, skin, id }) {
+  const shadow = shade(skin.shadow, -0.06);
+  const dark = shade(skin.shadow, -0.45);
+  const light = skin.light;
+  const defs = /* @__PURE__ */ jsxs12("defs", { children: [
+    /* @__PURE__ */ jsxs12(
+      "linearGradient",
+      {
+        id: `nose-${id}`,
+        x1: "0",
+        y1: "220",
+        x2: "0",
+        y2: "320",
+        gradientUnits: "userSpaceOnUse",
+        children: [
+          /* @__PURE__ */ jsx12("stop", { offset: "0", stopColor: shadow, stopOpacity: "0" }),
+          /* @__PURE__ */ jsx12("stop", { offset: ".5", stopColor: shadow, stopOpacity: ".3" }),
+          /* @__PURE__ */ jsx12("stop", { offset: "1", stopColor: shadow, stopOpacity: ".62" })
+        ]
+      }
+    ),
+    /* @__PURE__ */ jsx12("filter", { id: `nose-blur-${id}`, x: "-60%", y: "-60%", width: "220%", height: "220%", children: /* @__PURE__ */ jsx12("feGaussianBlur", { stdDeviation: "3.5" }) })
+  ] });
+  if (value === 1) {
+    return /* @__PURE__ */ jsxs12("g", { children: [
+      defs,
+      /* @__PURE__ */ jsx12(
+        "path",
+        {
+          d: "M256 222 C251 242 248 266 244 285 C240 301 242 310 250 313 C254 315 258 315 262 312 C270 308 270 299 266 285 C262 266 260 242 256 222 Z",
+          fill: `url(#nose-${id})`
+        }
+      ),
+      /* @__PURE__ */ jsx12(
+        "path",
+        {
+          d: "M258 228 C261 246 263 266 267 284 C270 298 268 306 262 311 C270 303 271 295 268 283 C265 266 261 246 258 228 Z",
+          fill: shadow,
+          opacity: ".35"
+        }
+      ),
+      /* @__PURE__ */ jsx12(
+        "path",
+        {
+          d: "M253 228 C250 246 248 264 245 282 C243 292 245 300 249 304 C246 298 246 290 248 280 C251 262 254 244 256 228 Z",
+          fill: light,
+          opacity: ".5"
+        }
+      ),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "245", cy: "306", rx: "7", ry: "4.5", fill: shadow, opacity: ".68", transform: "rotate(-14 245 306)" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "267", cy: "306", rx: "7", ry: "4.5", fill: shadow, opacity: ".68", transform: "rotate(14 267 306)" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "248", cy: "307", rx: "4.2", ry: "2.6", fill: dark, opacity: ".85", transform: "rotate(-14 248 307)" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "264", cy: "307", rx: "4.2", ry: "2.6", fill: dark, opacity: ".85", transform: "rotate(14 264 307)" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "255", cy: "299", rx: "7", ry: "5.5", fill: light, opacity: ".3" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "256", cy: "315", rx: "11", ry: "3.5", fill: shadow, opacity: ".4", filter: `url(#nose-blur-${id})` })
+    ] });
+  }
+  if (value === 2) {
+    return /* @__PURE__ */ jsxs12("g", { children: [
+      defs,
+      /* @__PURE__ */ jsx12(
+        "path",
+        {
+          d: "M256 230 C252 246 249 262 245 276 C239 291 241 301 249 305 C254 308 261 307 266 303 C273 297 272 288 268 276 C264 262 260 246 256 230 Z",
+          fill: `url(#nose-${id})`
+        }
+      ),
+      /* @__PURE__ */ jsx12(
+        "path",
+        {
+          d: "M259 236 C262 250 264 262 267 276 C270 288 268 296 263 301 C270 294 271 286 268 275 C265 262 262 250 259 236 Z",
+          fill: shadow,
+          opacity: ".32"
+        }
+      ),
+      /* @__PURE__ */ jsx12(
+        "path",
+        {
+          d: "M253 236 C250 248 248 262 245 276 C243 286 245 294 249 298 C246 292 246 284 248 274 C251 260 254 248 256 236 Z",
+          fill: light,
+          opacity: ".45"
+        }
+      ),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "256", cy: "298", rx: "12", ry: "8", fill: shadow, opacity: ".25" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "245", cy: "300", rx: "6.5", ry: "4", fill: shadow, opacity: ".65", transform: "rotate(-12 245 300)" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "267", cy: "300", rx: "6.5", ry: "4", fill: shadow, opacity: ".65", transform: "rotate(12 267 300)" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "248", cy: "301", rx: "3.8", ry: "2.4", fill: dark, opacity: ".85", transform: "rotate(-12 248 301)" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "264", cy: "301", rx: "3.8", ry: "2.4", fill: dark, opacity: ".85", transform: "rotate(12 264 301)" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "256", cy: "292", rx: "9", ry: "7", fill: light, opacity: ".3" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "256", cy: "308", rx: "10", ry: "3", fill: shadow, opacity: ".38", filter: `url(#nose-blur-${id})` })
+    ] });
+  }
+  if (value === 3) {
+    return /* @__PURE__ */ jsxs12("g", { children: [
+      defs,
+      /* @__PURE__ */ jsx12(
+        "path",
+        {
+          d: "M256 218 C250 240 247 264 243 285 C238 303 240 314 250 317 C255 319 261 318 266 314 C276 308 275 297 271 283 C267 263 261 240 256 218 Z",
+          fill: `url(#nose-${id})`
+        }
+      ),
+      /* @__PURE__ */ jsx12(
+        "path",
+        {
+          d: "M258 224 C262 246 267 266 272 284 C276 300 274 310 266 315 C276 307 278 296 273 282 C269 264 263 244 258 224 Z",
+          fill: shadow,
+          opacity: ".48"
+        }
+      ),
+      /* @__PURE__ */ jsx12(
+        "path",
+        {
+          d: "M253 226 C249 244 246 262 242 280 C240 292 242 301 247 305 C243 298 244 290 247 278 C250 262 253 244 256 226 Z",
+          fill: light,
+          opacity: ".55"
+        }
+      ),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "238", cy: "308", rx: "8.5", ry: "4.8", fill: shadow, opacity: ".7", transform: "rotate(-16 238 308)" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "274", cy: "308", rx: "8.5", ry: "4.8", fill: shadow, opacity: ".7", transform: "rotate(16 274 308)" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "242", cy: "309", rx: "5", ry: "2.8", fill: dark, opacity: ".85", transform: "rotate(-16 242 309)" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "270", cy: "309", rx: "5", ry: "2.8", fill: dark, opacity: ".85", transform: "rotate(16 270 309)" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "254", cy: "301", rx: "8", ry: "6", fill: light, opacity: ".3" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "256", cy: "318", rx: "14", ry: "4", fill: shadow, opacity: ".42", filter: `url(#nose-blur-${id})` })
+    ] });
+  }
+  if (value === 4) {
+    return /* @__PURE__ */ jsxs12("g", { children: [
+      defs,
+      /* @__PURE__ */ jsx12(
+        "path",
+        {
+          d: "M256 236 C250 252 245 268 238 283 C230 299 231 311 243 315 C251 318 261 318 269 314 C281 309 281 297 273 283 C266 268 261 252 256 236 Z",
+          fill: `url(#nose-${id})`
+        }
+      ),
+      /* @__PURE__ */ jsx12(
+        "path",
+        {
+          d: "M258 242 C262 256 266 270 272 284 C276 296 275 306 268 312 C277 304 279 294 274 282 C269 268 263 254 258 242 Z",
+          fill: shadow,
+          opacity: ".38"
+        }
+      ),
+      /* @__PURE__ */ jsx12(
+        "path",
+        {
+          d: "M253 244 C249 258 245 272 240 284 C236 294 238 302 243 306 C239 300 240 292 244 282 C249 268 253 254 256 244 Z",
+          fill: light,
+          opacity: ".42"
+        }
+      ),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "234", cy: "307", rx: "10", ry: "5.2", fill: shadow, opacity: ".68", transform: "rotate(-18 234 307)" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "278", cy: "307", rx: "10", ry: "5.2", fill: shadow, opacity: ".68", transform: "rotate(18 278 307)" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "239", cy: "308", rx: "6", ry: "3", fill: dark, opacity: ".85", transform: "rotate(-18 239 308)" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "273", cy: "308", rx: "6", ry: "3", fill: dark, opacity: ".85", transform: "rotate(18 273 308)" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "253", cy: "300", rx: "7", ry: "5", fill: light, opacity: ".28" }),
+      /* @__PURE__ */ jsx12("ellipse", { cx: "256", cy: "318", rx: "18", ry: "4.5", fill: shadow, opacity: ".45", filter: `url(#nose-blur-${id})` })
+    ] });
+  }
+  return /* @__PURE__ */ jsxs12("g", { children: [
+    defs,
+    /* @__PURE__ */ jsx12(
+      "path",
+      {
+        d: "M256 220 C249 240 244 262 238 281 C231 299 232 310 244 314 C251 317 261 317 268 314 C280 310 281 299 274 281 C268 262 263 240 256 220 Z",
+        fill: `url(#nose-${id})`
+      }
+    ),
+    /* @__PURE__ */ jsx12(
+      "path",
+      {
+        d: "M258 226 C262 246 267 266 272 283 C276 298 274 308 267 313 C276 305 278 296 274 282 C270 264 264 244 258 226 Z",
+        fill: shadow,
+        opacity: ".38"
+      }
+    ),
+    /* @__PURE__ */ jsx12(
+      "path",
+      {
+        d: "M253 226 C249 244 245 262 241 278 C239 288 241 296 246 301 C242 294 243 286 246 275 C249 259 252 242 255 226 Z",
+        fill: light,
+        opacity: ".55"
+      }
+    ),
+    /* @__PURE__ */ jsx12("ellipse", { cx: "238", cy: "306", rx: "9", ry: "5", fill: shadow, opacity: ".7", transform: "rotate(-18 238 306)" }),
+    /* @__PURE__ */ jsx12("ellipse", { cx: "274", cy: "306", rx: "9", ry: "5", fill: shadow, opacity: ".7", transform: "rotate(18 274 306)" }),
+    /* @__PURE__ */ jsx12("ellipse", { cx: "242", cy: "307", rx: "5.5", ry: "3", fill: dark, opacity: ".86", transform: "rotate(-18 242 307)" }),
+    /* @__PURE__ */ jsx12("ellipse", { cx: "270", cy: "307", rx: "5.5", ry: "3", fill: dark, opacity: ".86", transform: "rotate(18 270 307)" }),
+    /* @__PURE__ */ jsx12("ellipse", { cx: "254", cy: "298", rx: "8", ry: "6", fill: light, opacity: ".32" }),
+    /* @__PURE__ */ jsx12("ellipse", { cx: "256", cy: "316", rx: "16", ry: "4", fill: shadow, opacity: ".42", filter: `url(#nose-blur-${id})` }),
+    /* @__PURE__ */ jsx12(
+      "path",
+      {
+        d: "M232 300 C238 296 246 296 252 300",
+        stroke: shadow,
+        strokeWidth: "2",
+        fill: "none",
+        opacity: ".5",
+        strokeLinecap: "round"
+      }
+    ),
+    /* @__PURE__ */ jsx12(
+      "path",
+      {
+        d: "M260 300 C266 296 274 296 280 300",
+        stroke: shadow,
+        strokeWidth: "2",
+        fill: "none",
+        opacity: ".5",
+        strokeLinecap: "round"
+      }
+    )
+  ] });
+}
+
+// src/face/Face.tsx
+import { jsx as jsx13, jsxs as jsxs13 } from "react/jsx-runtime";
+function faceDescription(traits) {
+  const skin = SKINS[traits.skin] ?? SKINS[0];
+  const hair = HAIR_STYLES[traits.hair] ?? HAIR_STYLES[0];
+  const eye = EYES[traits.eye] ?? EYES[0];
+  const beard = BEARDS[traits.beard] ?? BEARDS[0];
+  const headwear = HEADWEAR[traits.headwear] ?? HEADWEAR[0];
+  const marks = MARKS[traits.marks] ?? MARKS[0];
+  const necklace = NECKLACES[traits.necklace] ?? NECKLACES[0];
+  const beardText = traits.beard === 0 ? "no beard" : `a ${beard.toLowerCase()}`;
+  const headwearText = traits.headwear === 0 ? "" : `, ${headwear.name.toLowerCase()} headwear`;
+  const marksText = traits.marks === 0 ? "" : `, ${marks.toLowerCase()} facial marks`;
+  const necklaceText = traits.necklace === 0 ? "" : `, ${necklace.toLowerCase()}`;
+  return `Illustrated portrait with ${skin.name.toLowerCase()} skin, ${hair.toLowerCase()} hair${headwearText}${marksText}${necklaceText}, ${eye.toLowerCase()} eyes, and ${beardText}.`;
+}
+function Face({ traits, className, decorative = false, svgId, background, viewBox }) {
+  const reactId = useId();
+  const id = (svgId ?? reactId).replace(/[^a-zA-Z0-9_-]/g, "");
+  const skin = SKINS[traits.skin] ?? SKINS[0];
+  const hairColor = (HAIR_COLORS[traits.hairColor] ?? HAIR_COLORS[0]).value;
+  const eyeColor = (EYE_COLORS[traits.eyeColor] ?? EYE_COLORS[0]).value;
+  const fabric = FABRICS[traits.fabric] ?? FABRICS[0];
+  const bg = (BACKGROUNDS[traits.bg] ?? BACKGROUNDS[0]).value;
+  const hair = traits.headwear !== 0 ? 8 : traits.hair;
+  return /* @__PURE__ */ jsxs13(
+    "svg",
+    {
+      id: svgId,
+      viewBox: viewBox ?? "0 0 512 512",
+      className,
+      xmlns: "http://www.w3.org/2000/svg",
+      role: decorative ? void 0 : "img",
+      "aria-hidden": decorative || void 0,
+      "aria-label": decorative ? void 0 : faceDescription(traits),
+      children: [
+        /* @__PURE__ */ jsx13("defs", { children: /* @__PURE__ */ jsxs13("radialGradient", { id: `bg-${id}`, cx: ".5", cy: ".42", r: ".78", children: [
+          /* @__PURE__ */ jsx13("stop", { offset: "0", stopColor: "#ffffff", stopOpacity: ".1" }),
+          /* @__PURE__ */ jsx13("stop", { offset: "1", stopColor: "#000000", stopOpacity: ".06" })
+        ] }) }),
+        /* @__PURE__ */ jsx13("rect", { width: "512", height: "512", fill: background ?? bg }),
+        /* @__PURE__ */ jsx13("rect", { width: "512", height: "512", fill: `url(#bg-${id})`, opacity: background ? 0 : 1 }),
+        /* @__PURE__ */ jsx13(HairBack, { value: hair, color: hairColor, skin, id }),
+        /* @__PURE__ */ jsx13(Head, { shape: traits.face, skin, id }),
+        /* @__PURE__ */ jsx13(Necklace, { value: traits.necklace }),
+        /* @__PURE__ */ jsx13(HairFront, { value: hair, color: hairColor, skin, id }),
+        /* @__PURE__ */ jsx13(Earrings, { value: traits.earrings }),
+        /* @__PURE__ */ jsx13(HeadwearFront, { value: traits.headwear, fabric, id }),
+        /* @__PURE__ */ jsx13(Brows, { value: traits.brow, hairColor }),
+        /* @__PURE__ */ jsx13(Eyes, { value: traits.eye, color: eyeColor, skin, id }),
+        /* @__PURE__ */ jsx13(Nose, { value: traits.nose, skin, id }),
+        /* @__PURE__ */ jsx13(Marks, { value: traits.marks, skin }),
+        /* @__PURE__ */ jsx13(
+          BeardBase,
+          {
+            value: traits.beard,
+            color: hairColor,
+            skin,
+            shape: traits.face,
+            id
+          }
+        ),
+        /* @__PURE__ */ jsx13(Mouth, { value: traits.mouth, skin, id }),
+        beardHasMustache(traits.beard) && /* @__PURE__ */ jsx13(Mustache, { color: hairColor, full: traits.beard !== 1 }),
+        /* @__PURE__ */ jsx13(Glasses, { value: traits.glasses })
+      ]
+    }
+  );
+}
+
+// server/face.ts
+var DEFAULT_SIZE = 1024;
+var MIN_SIZE = 64;
+var MAX_SIZE = 2048;
+var HEX = /^#?([0-9a-f]{6})$/i;
+function first(value) {
+  return Array.isArray(value) ? value[0] : value;
+}
+function readCode(url, query) {
+  const fromQuery = first(query.code) ?? url.searchParams.get("code") ?? "";
+  if (fromQuery) return fromQuery;
+  const parts = url.pathname.split("/").filter(Boolean);
+  const last = parts[parts.length - 1] ?? "";
+  return last === "face" ? "" : decodeURIComponent(last);
+}
+function readSize(url, query) {
+  const raw = first(query.size) ?? url.searchParams.get("size") ?? "";
+  const value = Number.parseInt(raw, 10);
+  if (!Number.isFinite(value)) return DEFAULT_SIZE;
+  return Math.min(MAX_SIZE, Math.max(MIN_SIZE, Math.round(value)));
+}
+function readFormat(url, query) {
+  const raw = (first(query.format) ?? url.searchParams.get("format") ?? "svg").toLowerCase();
+  if (raw === "png") return "png";
+  if (raw === "jpg" || raw === "jpeg") return "jpg";
+  return "svg";
+}
+function readBackground(url, query) {
+  const raw = first(query.background) ?? first(query.bg) ?? url.searchParams.get("background") ?? "";
+  const match = HEX.exec(raw.trim());
+  return match ? `#${match[1].toLowerCase()}` : void 0;
+}
+function renderSvg(code, size, background) {
+  const traits = decodeTraits(code);
+  if (!traits) return null;
+  const markup = renderToStaticMarkup(
+    createElement(Face, {
+      traits,
+      background,
+      decorative: false,
+      svgId: `face-${code}`
+    })
+  );
+  return markup.replace("<svg ", `<svg width="${size}" height="${size}" `);
+}
+function send(res, status, body, type) {
+  res.statusCode = status;
+  res.setHeader("Content-Type", type);
+  res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=86400");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.end(body);
+}
+function fail(res, status, message) {
+  send(res, status, `${message}
+`, "text/plain; charset=utf-8");
+}
+async function handler(req, res) {
+  const query = req.query ?? {};
+  const url = new URL(req.url ?? "/", "http://localhost");
+  const code = readCode(url, query).trim();
+  const size = readSize(url, query);
+  const format = readFormat(url, query);
+  const background = readBackground(url, query);
+  if (!code) return fail(res, 400, "Missing face code. Use /face/<code>.");
+  let svg;
+  try {
+    svg = renderSvg(code, size, background);
+  } catch (error) {
+    console.error(error);
+    return fail(res, 500, "Could not render this face.");
+  }
+  if (!svg) return fail(res, 404, "Unknown face code.");
+  if (format === "svg") {
+    return send(res, 200, svg, "image/svg+xml; charset=utf-8");
+  }
+  try {
+    const { default: sharp } = await import("sharp");
+    const image = sharp(Buffer.from(svg)).resize(size, size);
+    const buffer = format === "png" ? await image.png().toBuffer() : await image.flatten({ background: "#ffffff" }).jpeg({ quality: 92 }).toBuffer();
+    return send(res, 200, buffer, format === "png" ? "image/png" : "image/jpeg");
+  } catch (error) {
+    console.error(error);
+    return fail(res, 500, "Could not encode this image.");
+  }
+}
+export {
+  handler as default
+};

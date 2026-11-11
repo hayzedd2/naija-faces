@@ -1,4 +1,8 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { decodeTraits } from '../src/face/codec'
+import { Face } from '../src/face/Face'
 
 const DEFAULT_SIZE = 1024
 const MIN_SIZE = 64
@@ -40,6 +44,23 @@ function readBackground(url: URL, query: Query): string | undefined {
   return match ? `#${match[1].toLowerCase()}` : undefined
 }
 
+function renderSvg(code: string, size: number, background: string | undefined): string | null {
+  const traits = decodeTraits(code)
+  if (!traits) return null
+
+  const markup = renderToStaticMarkup(
+    createElement(Face, {
+      traits,
+      background,
+      decorative: false,
+      svgId: `face-${code}`,
+    }),
+  )
+
+  // The composition renders at 512×512; expose the requested pixel size.
+  return markup.replace('<svg ', `<svg width="${size}" height="${size}" `)
+}
+
 function send(res: ServerResponse, status: number, body: string | Buffer, type: string) {
   res.statusCode = status
   res.setHeader('Content-Type', type)
@@ -54,8 +75,6 @@ function fail(res: ServerResponse, status: number, message: string) {
 }
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
-  res.setHeader('X-Face-Debug', 'handler-reached')
-
   const query = ((req as IncomingMessage & { query?: Query }).query ?? {}) as Query
   const url = new URL(req.url ?? '/', 'http://localhost')
   const code = readCode(url, query).trim()
@@ -65,37 +84,15 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
   if (!code) return fail(res, 400, 'Missing face code. Use /face/<code>.')
 
-  let svg: string
+  let svg: string | null
   try {
-    const [{ createElement }, { renderToStaticMarkup }, { Face }, { decodeTraits }] = await Promise.all([
-      import('react'),
-      import('react-dom/server'),
-      import('../src/face/Face.js'),
-      import('../src/face/codec.js'),
-    ])
-
-    const traits = decodeTraits(code)
-    if (!traits) return fail(res, 404, 'Unknown face code.')
-
-    const markup = renderToStaticMarkup(
-      createElement(Face, {
-        traits,
-        background,
-        decorative: false,
-        svgId: `face-${code}`,
-      }),
-    )
-
-    // The composition renders at 512×512; expose the requested pixel size.
-    svg = markup.replace('<svg ', `<svg width="${size}" height="${size}" `)
+    svg = renderSvg(code, size, background)
   } catch (error) {
     console.error(error)
-    return fail(
-      res,
-      500,
-      `Face render error: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`,
-    )
+    return fail(res, 500, 'Could not render this face.')
   }
+
+  if (!svg) return fail(res, 404, 'Unknown face code.')
 
   if (format === 'svg') {
     return send(res, 200, svg, 'image/svg+xml; charset=utf-8')
@@ -111,10 +108,6 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return send(res, 200, buffer, format === 'png' ? 'image/png' : 'image/jpeg')
   } catch (error) {
     console.error(error)
-    return fail(
-      res,
-      500,
-      `Face encode error: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`,
-    )
+    return fail(res, 500, 'Could not encode this image.')
   }
 }
