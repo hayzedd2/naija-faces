@@ -709,6 +709,18 @@ kbd {
   font-weight: 600;
 }
 
+.footer-link {
+  color: var(--muted);
+  text-decoration: underline;
+  text-decoration-color: rgba(125, 113, 100, 0.4);
+  text-underline-offset: 2px;
+}
+
+.footer-link:hover {
+  color: var(--ink);
+  text-decoration-color: currentColor;
+}
+
 .footer-brand .brand-mark {
   border-radius: 7px;
 }

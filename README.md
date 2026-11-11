@@ -30,7 +30,7 @@ It uses the split layout and the face code set in `scripts/build-og.mjs`.
 
 ## Face image API
 
-Every face can be served as an image from its code:
+Every face can be served as an image from its code. There is an interactive playground at [`/docs`](https://naija-faces.vercel.app/docs).
 
 ```html
 <img src="https://naija-faces.vercel.app/face/280010000000100000?format=svg&size=1024" alt="Naija face" />
@@ -53,5 +53,7 @@ Examples:
 ```
 
 Face codes come from the `face` query parameter in the app URL.
+
+The playground is a separate Vite entry: `docs/index.html` and `src/docs/`. It is built to `dist/docs/index.html` and served at `/docs`.
 
 The handler lives in `server/face.ts` and is bundled to `api/face.js`. `vercel.json` rewrites `/face/:code` to `/api/face?code=:code`. During local development, the Vite dev server runs the same handler, so `/face/<code>` works at `http://localhost:5173` too.

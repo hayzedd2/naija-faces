@@ -1,5 +1,6 @@
 import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
+import { fileURLToPath } from 'node:url'
 
 /**
  * Serve `/face/<code>` locally through the same handler Vercel runs in production.
@@ -24,6 +25,31 @@ function faceApiDev(): Plugin {
   }
 }
 
+/**
+ * Serve `/docs` as `/docs/` in development so the path matches production.
+ */
+function docsDev(): Plugin {
+  return {
+    name: 'docs-dev',
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        if (req.url === '/docs' || req.url?.startsWith('/docs?')) {
+          req.url = req.url.replace(/^\/docs/, '/docs/')
+        }
+        next()
+      })
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [react(), faceApiDev()],
+  plugins: [react(), faceApiDev(), docsDev()],
+  build: {
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        docs: fileURLToPath(new URL('./docs/index.html', import.meta.url)),
+      },
+    },
+  },
 })

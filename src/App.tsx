@@ -256,7 +256,12 @@ export default function App() {
           <BrandMark size={22} /> Naija Faces
         </span>
         <span>Every feature drawn by hand, in SVG.</span>
-        <span>{PICKER_TABS.length} feature groups · no account needed</span>
+        <span>
+          {PICKER_TABS.length} feature groups · no account needed ·{' '}
+          <a className="footer-link" href="/docs">
+            Image API
+          </a>
+        </span>
       </footer>
 
       {toast && (

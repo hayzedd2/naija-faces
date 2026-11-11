@@ -3,6 +3,10 @@
     {
       "source": "/face/:code",
       "destination": "/api/face?code=:code"
+    },
+    {
+      "source": "/docs",
+      "destination": "/docs/index.html"
     }
   ]
 }
