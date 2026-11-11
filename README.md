@@ -15,6 +15,8 @@ bun run dev
 bun run build
 ```
 
+The build also regenerates `api/face.js`, the bundled serverless renderer, from `server/face.ts`. Keep that generated file committed so Vercel always detects the function.
+
 ## Face image API
 
 Every face can be served as an image from its code:
@@ -41,4 +43,4 @@ Examples:
 
 Face codes come from the `face` query parameter in the app URL.
 
-The endpoint is implemented in `api/face/[code].ts` and rewritten from `/face/:code` by `vercel.json`. During local development, the Vite dev server runs the same handler, so `/face/<code>` works at `http://localhost:5173` too.
+The handler lives in `server/face.ts` and is bundled to `api/face.js`. `vercel.json` rewrites `/face/:code` to `/api/face?code=:code`. During local development, the Vite dev server runs the same handler, so `/face/<code>` works at `http://localhost:5173` too.
