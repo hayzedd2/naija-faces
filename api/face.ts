@@ -1,8 +1,8 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { decodeTraits } from '../../src/face/codec'
-import { Face } from '../../src/face/Face'
+import { decodeTraits } from '../src/face/codec'
+import { Face } from '../src/face/Face'
 
 const DEFAULT_SIZE = 1024
 const MIN_SIZE = 64

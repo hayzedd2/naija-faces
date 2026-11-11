@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/face/:code",
-      "destination": "/api/face/:code"
+      "destination": "/api/face?code=:code"
     }
   ]
 }
