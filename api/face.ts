@@ -70,8 +70,8 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const [{ createElement }, { renderToStaticMarkup }, { Face }, { decodeTraits }] = await Promise.all([
       import('react'),
       import('react-dom/server'),
-      import('../src/face/Face'),
-      import('../src/face/codec'),
+      import('../src/face/Face.js'),
+      import('../src/face/codec.js'),
     ])
 
     const traits = decodeTraits(code)
